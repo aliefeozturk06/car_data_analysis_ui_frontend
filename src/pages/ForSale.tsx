@@ -1,12 +1,23 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
+import CurrencySelector from '../components/CurrencySelector'; // ✅ 1. IMPORT EKLENDİ
 import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, ShieldCheck } from 'lucide-react';
 
 const ForSale = () => {
     const [cars, setCars] = useState([]);
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isCollectionOpen, setIsCollectionOpen] = useState(true);
+
+    // ✅ 2. PARA BİRİMİ STATE'LERİ EKLENDİ
+    const [currencyRate, setCurrencyRate] = useState(parseFloat(localStorage.getItem('currencyRate') || "1"));
+    const [currencySymbol, setCurrencySymbol] = useState(localStorage.getItem('currencySymbol') || "₺");
+
+    // ✅ 3. PARA BİRİMİ DEĞİŞTİRME FONKSİYONU EKLENDİ
+    const handleCurrencyChange = (rate: number, symbol: string) => {
+        setCurrencyRate(rate);
+        setCurrencySymbol(symbol);
+    };
 
     // Kullanıcı Verisi
     const userString = localStorage.getItem('user');
@@ -63,7 +74,6 @@ const ForSale = () => {
                 className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`}
                 style={{
                     ...sidebarStyle,
-                    // 🔥 BURASI EKLENDİ: Sidebar açılıp kapanma mantığı
                     width: isSidebarOpen ? '260px' : '0px',
                     opacity: isSidebarOpen ? 1 : 0,
                     overflow: 'hidden',
@@ -125,7 +135,14 @@ const ForSale = () => {
                         <span style={{ background: '#000', color: '#fff', padding: '2px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>LISTING</span>
                     </div>
                     <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic' }}>VEHICLES FOR SALE</div>
-                    <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#666' }}>LOGOUT <LogOut size={16}/></div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+
+                        {/* ✅ 4. HEADER'A PARA BİRİMİ SEÇİCİSİ EKLENDİ */}
+                        <CurrencySelector onCurrencyChange={handleCurrencyChange} />
+
+                        <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#666' }}>LOGOUT <LogOut size={16}/></div>
+                    </div>
                 </header>
 
                 {/* SCROLLABLE AREA */}
@@ -148,7 +165,12 @@ const ForSale = () => {
                                     <tr key={car.id} style={{ borderBottom: '1px solid #f9f9f9' }}>
                                         <td style={{ padding: '20px', fontWeight: 900, fontSize: '18px' }}>{car.manufacturer}</td>
                                         <td style={{ padding: '20px' }}>{car.model}</td>
-                                        <td style={{ padding: '20px', fontWeight: 900 }}>${car.price.toLocaleString()}</td>
+
+                                        {/* ✅ 5. FİYAT GÖSTERİMİ GÜNCELLENDİ (ÇARPIM İŞLEMİ) */}
+                                        <td style={{ padding: '20px', fontWeight: 900 }}>
+                                            {currencySymbol} {(car.price * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                        </td>
+
                                         <td style={{ padding: '20px' }}>
                                             <span style={{
                                                 color: '#e74c3c',

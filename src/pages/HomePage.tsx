@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
+import CurrencySelector from '../components/CurrencySelector'; // ✅ 1. IMPORT EKLENDİ
 import {
     Home, Car, LogOut, Menu, Plus, Search, RotateCcw,
     ChevronLeft, ChevronRight, X, ShieldCheck, ChevronUp, ChevronDown
@@ -12,6 +13,16 @@ const HomePage = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isCollectionOpen, setIsCollectionOpen] = useState(true);
     const [loading, setLoading] = useState(false);
+
+    // ✅ 2. PARA BİRİMİ STATE'LERİ EKLENDİ
+    const [currencyRate, setCurrencyRate] = useState(parseFloat(localStorage.getItem('currencyRate') || "1"));
+    const [currencySymbol, setCurrencySymbol] = useState(localStorage.getItem('currencySymbol') || "₺");
+
+    // ✅ 3. PARA BİRİMİ DEĞİŞTİRME FONKSİYONU EKLENDİ
+    const handleCurrencyChange = (rate: number, symbol: string) => {
+        setCurrencyRate(rate);
+        setCurrencySymbol(symbol);
+    };
 
     // 🛠️ FİLTRE STATE
     const initialFilters = {
@@ -43,7 +54,7 @@ const HomePage = () => {
         manufacturer: '', model: '', year: 2024, price: 0, color: '', mileage: 0
     });
 
-    // 📡 VERİ ÇEKME FONKSİYONU
+    // 📡 VERİ ÇEKME FONKSİYONU (GÜNCELLENDİ)
     const fetchCars = useCallback(async () => {
         setLoading(true);
 
@@ -51,9 +62,17 @@ const HomePage = () => {
             .filter(([_, dir]) => dir !== null)
             .map(([field, dir]) => `${field},${dir}`);
 
+        // 🔥 FİLTRE DÜZELTMESİ: Girilen parayı TL'ye çevirip gönderiyoruz
+        // Örn: Dolar seçiliyken 100 yazıldıysa -> 100 / 0.03 = 3333 TL olarak aranır.
+        const searchFilters = {
+            ...filters,
+            minPrice: filters.minPrice ? Math.floor(Number(filters.minPrice) / currencyRate) : '',
+            maxPrice: filters.maxPrice ? Math.floor(Number(filters.maxPrice) / currencyRate) : ''
+        };
+
         try {
             const res = await api.get('/cars', {
-                params: { ...filters, sort: sortParams },
+                params: { ...searchFilters, sort: sortParams }, // filters yerine searchFilters kullanıldı
                 paramsSerializer: { indexes: null }
             });
             setCars(res.data.cars || []);
@@ -63,7 +82,7 @@ const HomePage = () => {
         } finally {
             setLoading(false);
         }
-    }, [filters, sorts]);
+    }, [filters, sorts, currencyRate]); // ⚠️ currencyRate dependency'e eklendi
 
     useEffect(() => {
         fetchCars();
@@ -112,24 +131,32 @@ const HomePage = () => {
         }
     };
 
-    // 💵 PARA YÜKLEME
     const handleAddFunds = async () => {
         const amount = parseFloat(amountToAdd);
         if (isNaN(amount) || amount <= 0) return alert("Geçerli bir miktar giriniz!");
+
+        const amountInTL = amount / currencyRate;
+
         try {
-            const res = await api.put(`/users/add-balance?username=${user.username}&amount=${amount}`);
+            const res = await api.put(`/users/add-balance?username=${user.username}&amount=${amountInTL}`);
             setBalance(res.data);
             localStorage.setItem('user', JSON.stringify({ ...user, balance: res.data }));
             setIsFundsModalOpen(false);
             setAmountToAdd('');
-            alert("Bakiye başarıyla yüklendi.");
+            alert(`${amount} ${currencySymbol} başarıyla yüklendi.`);
         } catch (e) { alert("Para yükleme başarısız!"); }
     };
 
-    // 🚗 YENİ ARAÇ EKLEME
+    // 🚗 YENİ ARAÇ EKLEME (GÜNCELLENDİ)
     const handleAddNewCar = async () => {
         try {
-            await api.post(`/cars?username=${user.username}`, newCar);
+            // 🛡️ KUR DÜZELTMESİ: Girilen fiyatı TL'ye çevirip öyle kaydediyoruz
+            const carToPost = {
+                ...newCar,
+                price: Math.floor(newCar.price / currencyRate)
+            };
+
+            await api.post(`/cars?username=${user.username}`, carToPost);
             alert("Yeni araç sisteme başarıyla eklendi!");
             setIsAddModalOpen(false);
             fetchCars();
@@ -151,7 +178,6 @@ const HomePage = () => {
                 className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`}
                 style={{
                     ...sidebarStyle,
-                    // 🔥 BURASI DÜZELTİLDİ
                     width: isSidebarOpen ? '260px' : '0px',
                     opacity: isSidebarOpen ? 1 : 0,
                     overflow: 'hidden',
@@ -219,7 +245,8 @@ const HomePage = () => {
                         </div>
 
                         <div style={{ background: '#1a1a1a', padding: '6px 15px', borderRadius: '8px', border: '1px solid #333', color: '#fff', fontSize: '13px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span>BALANCE: ${balance.toLocaleString()}</span>
+                            {/* Bakiyeyi kura göre güncelleme */}
+                            <span>BALANCE: {currencySymbol} {(balance * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                             <div onClick={() => setIsFundsModalOpen(true)} style={{ background: '#fff', color: '#000', border: 'none', borderRadius: '4px', padding: '1px 5px', cursor: 'pointer', display:'flex', alignItems:'center' }}>
                                 <Plus size={12}/>
                             </div>
@@ -231,6 +258,10 @@ const HomePage = () => {
 
                     {/* SAĞ KISIM */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
+
+                        {/* ✅ 4. HEADER'A PARA BİRİMİ SEÇİCİSİ EKLENDİ */}
+                        <CurrencySelector onCurrencyChange={handleCurrencyChange} />
+
                         <div onClick={() => setIsAddModalOpen(true)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 900, fontSize: '11px', color: '#fff' }}>
                             <Plus size={16}/> ADD CAR
                         </div>
@@ -259,8 +290,8 @@ const HomePage = () => {
                                 <div style={{flex: 1}}><label style={labelStyle}>YEAR (MAX)</label><input name="maxYear" value={filters.maxYear} onChange={handleFilterChange} placeholder="2024" style={inputStyle} /></div>
                             </div>
                             <div style={{ display: 'flex', gap: '10px' }}>
-                                <div style={{flex: 1}}><label style={labelStyle}>PRICE MIN ($)</label><input name="minPrice" value={filters.minPrice} onChange={handleFilterChange} placeholder="0" style={inputStyle} /></div>
-                                <div style={{flex: 1}}><label style={labelStyle}>PRICE MAX ($)</label><input name="maxPrice" value={filters.maxPrice} onChange={handleFilterChange} placeholder="1000000" style={inputStyle} /></div>
+                                <div style={{flex: 1}}><label style={labelStyle}>PRICE MIN ({currencySymbol})</label><input name="minPrice" value={filters.minPrice} onChange={handleFilterChange} placeholder="0" style={inputStyle} /></div>
+                                <div style={{flex: 1}}><label style={labelStyle}>PRICE MAX ({currencySymbol})</label><input name="maxPrice" value={filters.maxPrice} onChange={handleFilterChange} placeholder="1000000" style={inputStyle} /></div>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'flex-end' }}>
                                 <button onClick={fetchCars} disabled={loading} style={{ ...primaryBtnStyle, opacity: loading ? 0.7 : 1 }}>
@@ -289,7 +320,12 @@ const HomePage = () => {
                                     <td style={{ padding: '20px', fontWeight: 900, fontSize: '18px' }}>{car.manufacturer}</td>
                                     <td style={{ padding: '20px', color: '#666' }}>{car.model}</td>
                                     <td style={{ padding: '20px', fontWeight: 700 }}>{car.year}</td>
-                                    <td style={{ padding: '20px', fontWeight: 900, fontSize: '18px' }}>${car.price.toLocaleString()}</td>
+
+                                    {/* ✅ 5. FİYAT GÖSTERİMİ GÜNCELLENDİ (ÇARPIM İŞLEMİ) */}
+                                    <td style={{ padding: '20px', fontWeight: 900, fontSize: '18px' }}>
+                                        {currencySymbol} {(car.price * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                    </td>
+
                                     <td style={{ padding: '20px', color: '#666', fontWeight: 700 }}>{car.color?.toUpperCase()}</td>
                                     <td style={{ padding: '20px' }}>
                                         <button className="auth-button" style={{ padding: '8px 20px', fontSize: '11px', width: 'auto' }} onClick={() => handleBuyCar(car.id, car.price)}>BUY</button>
@@ -330,7 +366,9 @@ const HomePage = () => {
                             <div><label style={labelStyle}>YEAR</label><input style={inputStyle} type="number" value={newCar.year} onChange={(e) => setNewCar({...newCar, year: parseInt(e.target.value)})} /></div>
                             <div><label style={labelStyle}>COLOR</label><input style={inputStyle} value={newCar.color} onChange={(e) => setNewCar({...newCar, color: e.target.value})} placeholder="e.g. Shark Blue" /></div>
                             <div><label style={labelStyle}>MILEAGE</label><input style={inputStyle} type="number" value={newCar.mileage} onChange={(e) => setNewCar({...newCar, mileage: parseInt(e.target.value)})} /></div>
-                            <div><label style={labelStyle}>PRICE ($)</label><input style={inputStyle} type="number" value={newCar.price} onChange={(e) => setNewCar({...newCar, price: parseInt(e.target.value)})} /></div>
+
+                            {/* 🔥 LABEL GÜNCELLENDİ: Para Birimi Simgesi Eklendi */}
+                            <div><label style={labelStyle}>PRICE ({currencySymbol})</label><input style={inputStyle} type="number" value={newCar.price} onChange={(e) => setNewCar({...newCar, price: parseInt(e.target.value)})} /></div>
                         </div>
                         <button onClick={handleAddNewCar} style={{ width: '100%', padding: '18px', borderRadius: '15px', background: '#fff', color: '#000', fontWeight: 900, cursor: 'pointer', border: 'none', marginTop: '30px' }}>CONFIRM AND ADD</button>
                     </div>
@@ -341,7 +379,8 @@ const HomePage = () => {
                 <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
                     <div style={{ background: '#000', padding: '40px', borderRadius: '30px', border: '1px solid #333', width: '400px', textAlign: 'center' }}>
                         <h2 style={{ color: '#fff', fontSize: '22px', fontWeight: 900, marginBottom: '30px', fontStyle: 'italic' }}>ADD FUNDS</h2>
-                        <input type="number" placeholder="Amount ($)" value={amountToAdd} onChange={(e) => setAmountToAdd(e.target.value)} style={inputStyle} />
+                        {/* ✅ PLACEHOLDER GÜNCELLENDİ */}
+                        <input type="number" placeholder={`Amount (${currencySymbol})`} value={amountToAdd} onChange={(e) => setAmountToAdd(e.target.value)} style={inputStyle} />
                         <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
                             <button onClick={handleAddFunds} style={{ flex: 1, padding: '15px', borderRadius: '12px', background: '#fff', color: '#000', fontWeight: 900, cursor: 'pointer', border: 'none' }}>CONFIRM</button>
                             <button onClick={() => { setIsFundsModalOpen(false); setAmountToAdd(''); }} style={{ flex: 1, padding: '15px', borderRadius: '12px', background: '#222', color: '#fff', fontWeight: 900, cursor: 'pointer', border: 'none' }}>CANCEL</button>

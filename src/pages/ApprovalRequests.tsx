@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
+import CurrencySelector from '../components/CurrencySelector'; // ✅ 1. IMPORT EKLENDİ
 import {
     Home, Car, LogOut, Menu, CheckCircle, Plus,
-    ShieldCheck, ChevronDown, ChevronUp, User, Clock, RotateCcw, ChevronLeft, ChevronRight
+    ShieldCheck, ChevronDown, ChevronUp, User, Clock, RotateCcw, ChevronLeft, ChevronRight, X
 } from 'lucide-react';
 
 const ApprovalRequests = () => {
@@ -19,10 +20,24 @@ const ApprovalRequests = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isCollectionOpen, setIsCollectionOpen] = useState(true);
 
+    // ✅ 2. PARA BİRİMİ STATE'LERİ EKLENDİ
+    const [currencyRate, setCurrencyRate] = useState(parseFloat(localStorage.getItem('currencyRate') || "1"));
+    const [currencySymbol, setCurrencySymbol] = useState(localStorage.getItem('currencySymbol') || "₺");
+
+    // ✅ 3. PARA BİRİMİ DEĞİŞTİRME FONKSİYONU EKLENDİ
+    const handleCurrencyChange = (rate: number, symbol: string) => {
+        setCurrencyRate(rate);
+        setCurrencySymbol(symbol);
+    };
+
     // Kullanıcı Bilgisi
     const userString = localStorage.getItem('user');
     const user = userString ? JSON.parse(userString) : {};
-    const [balance] = useState(user.balance || 0);
+
+    // ✅ BAKİYE VE MODAL STATE'LERİ GÜNCELLENDİ
+    const [balance, setBalance] = useState(user.balance || 0);
+    const [isFundsModalOpen, setIsFundsModalOpen] = useState(false);
+    const [amountToAdd, setAmountToAdd] = useState('');
 
     // 📡 MODERATÖR VERİSİNİ ÇEK
     const fetchRequests = useCallback(async () => {
@@ -72,6 +87,24 @@ const ApprovalRequests = () => {
         } catch (e: any) {
             alert("İşlem başarısız! Hata: " + (e.response?.status || "Bilinmiyor"));
         }
+    };
+
+    // ✅ PARA YÜKLEME FONKSİYONU (KUR ÇEVRİMİ DAHİL)
+    const handleAddFunds = async () => {
+        const amount = parseFloat(amountToAdd);
+        if (isNaN(amount) || amount <= 0) return alert("Geçerli bir miktar giriniz!");
+
+        // 💰 Girilen tutarı TL'ye çevirerek sisteme atıyoruz
+        const amountInTL = amount / currencyRate;
+
+        try {
+            const res = await api.put(`/users/add-balance?username=${user.username}&amount=${amountInTL}`);
+            setBalance(res.data);
+            localStorage.setItem('user', JSON.stringify({ ...user, balance: res.data }));
+            setIsFundsModalOpen(false);
+            setAmountToAdd('');
+            alert(`${amount} ${currencySymbol} başarıyla yüklendi.`);
+        } catch (e) { alert("Para yükleme başarısız!"); }
     };
 
     // Sayfalama Mantığı
@@ -132,8 +165,12 @@ const ApprovalRequests = () => {
                         </div>
 
                         <div style={{ background: '#1a1a1a', padding: '6px 15px', borderRadius: '8px', border: '1px solid #333', color: '#fff', fontSize: '13px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span>BALANCE: ${balance.toLocaleString()}</span>
-                            <div style={{ background: '#fff', color: '#000', border: 'none', borderRadius: '4px', padding: '1px 5px', cursor: 'pointer', display:'flex', alignItems:'center' }}>
+                            {/* Bakiye Gösterimi Güncellendi */}
+                            <span>BALANCE: {currencySymbol} {(balance * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                            <div
+                                onClick={() => setIsFundsModalOpen(true)} // ✅ TIKLAMA ÖZELLİĞİ EKLENDİ
+                                style={{ background: '#fff', color: '#000', border: 'none', borderRadius: '4px', padding: '1px 5px', cursor: 'pointer', display:'flex', alignItems:'center' }}
+                            >
                                 <Plus size={12}/>
                             </div>
                         </div>
@@ -143,8 +180,14 @@ const ApprovalRequests = () => {
                         INCOMING REQUESTS
                     </div>
 
-                    <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#999', display:'flex', alignItems:'center', gap:'5px' }}>
-                        LOGOUT <LogOut size={16}/>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+
+                        {/* ✅ 4. HEADER'A PARA BİRİMİ SEÇİCİSİ EKLENDİ */}
+                        <CurrencySelector onCurrencyChange={handleCurrencyChange} />
+
+                        <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#999', display:'flex', alignItems:'center', gap:'5px' }}>
+                            LOGOUT <LogOut size={16}/>
+                        </div>
                     </div>
                 </header>
 
@@ -204,13 +247,17 @@ const ApprovalRequests = () => {
                                                 <div style={badgeStyle}>
                                                     <span>Price:</span>
                                                     <div style={{textAlign:'right', display:'flex', flexDirection:'column', alignItems:'flex-end', lineHeight:'1.2'}}>
+
+                                                        {/* ✅ 5. ESKİ FİYAT (KUR HESAPLAMALI) */}
                                                         {req.oldPrice && (
                                                             <span style={{textDecoration: 'line-through', color: '#999', fontSize: '9px'}}>
-                                                                ${req.oldPrice.toLocaleString()}
+                                                                {currencySymbol} {(req.oldPrice * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                                             </span>
                                                         )}
+
+                                                        {/* ✅ 6. YENİ FİYAT (KUR HESAPLAMALI) */}
                                                         <span style={{fontWeight:800, color: req.oldPrice && req.newPrice > req.oldPrice ? '#27ae60' : (req.oldPrice && req.newPrice < req.oldPrice ? '#c0392b' : '#000')}}>
-                                                            ${req.newPrice.toLocaleString()}
+                                                            {currencySymbol} {(req.newPrice * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                                             {req.oldPrice && (req.newPrice > req.oldPrice ? ' ▲' : req.newPrice < req.oldPrice ? ' ▼' : '')}
                                                         </span>
                                                     </div>
@@ -291,6 +338,29 @@ const ApprovalRequests = () => {
                 </footer>
 
             </div>
+
+            {/* ✅ BAKİYE YÜKLEME MODALI EKLENDİ */}
+            {isFundsModalOpen && (
+                <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.85)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
+                    <div style={{ background: '#000', padding: '40px', borderRadius: '30px', border: '1px solid #333', width: '400px', textAlign: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                            <h2 style={{ color: '#fff', fontSize: '22px', fontWeight: 900, fontStyle: 'italic', margin: 0 }}>ADD FUNDS</h2>
+                            <X onClick={() => setIsFundsModalOpen(false)} style={{ color: '#fff', cursor: 'pointer' }} size={24} />
+                        </div>
+                        <input
+                            type="number"
+                            placeholder={`Amount (${currencySymbol})`}
+                            value={amountToAdd}
+                            onChange={(e) => setAmountToAdd(e.target.value)}
+                            style={inputStyle}
+                        />
+                        <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
+                            <button onClick={handleAddFunds} style={{ flex: 1, padding: '15px', borderRadius: '12px', background: '#fff', color: '#000', fontWeight: 900, cursor: 'pointer', border: 'none' }}>CONFIRM</button>
+                            <button onClick={() => { setIsFundsModalOpen(false); setAmountToAdd(''); }} style={{ flex: 1, padding: '15px', borderRadius: '12px', background: '#222', color: '#fff', fontWeight: 900, cursor: 'pointer', border: 'none' }}>CANCEL</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -322,5 +392,6 @@ const refreshBtnStyle = { background: '#000', color: '#fff', padding: '10px 20px
 const approveBtnStyle = { background: '#000', color: '#fff', border: 'none', padding: '6px 15px', borderRadius: '6px', cursor: 'pointer', fontWeight: 800, fontSize: '11px' };
 const rejectBtnStyle = { background: '#fff', color: '#c0392b', border: '1px solid #c0392b', padding: '6px 15px', borderRadius: '6px', cursor: 'pointer', fontWeight: 800, fontSize: '11px' };
 const fBtnStyle = (disabled: boolean) => ({ background: 'transparent', border: 'none', color: disabled ? '#444' : '#fff', cursor: disabled ? 'default' : 'pointer', fontWeight: 900, fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px' });
+const inputStyle = { width: '100%', padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: '#fff', color: '#000', fontWeight: 700, fontSize: '14px' };
 
 export default ApprovalRequests;

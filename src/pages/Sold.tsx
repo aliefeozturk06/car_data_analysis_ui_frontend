@@ -1,12 +1,23 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
+import CurrencySelector from '../components/CurrencySelector'; // ✅ 1. IMPORT EKLENDİ
 import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, ShieldCheck } from 'lucide-react';
 
 const Sold = () => {
     const [cars, setCars] = useState([]);
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isCollectionOpen, setIsCollectionOpen] = useState(true);
+
+    // ✅ 2. PARA BİRİMİ STATE'LERİ EKLENDİ
+    const [currencyRate, setCurrencyRate] = useState(parseFloat(localStorage.getItem('currencyRate') || "1"));
+    const [currencySymbol, setCurrencySymbol] = useState(localStorage.getItem('currencySymbol') || "₺");
+
+    // ✅ 3. PARA BİRİMİ DEĞİŞTİRME FONKSİYONU EKLENDİ
+    const handleCurrencyChange = (rate: number, symbol: string) => {
+        setCurrencyRate(rate);
+        setCurrencySymbol(symbol);
+    };
 
     // Kullanıcı Verisi
     const userString = localStorage.getItem('user');
@@ -46,7 +57,7 @@ const Sold = () => {
 
     useEffect(() => { fetchCars(); }, [fetchCars]);
 
-    // Toplam kar hesabı
+    // Toplam kar hesabı (KURA GÖRE ÇARPILDI)
     const totalProfit = cars.reduce((acc: any, curr: any) => acc + curr.price, 0);
 
     return (
@@ -57,7 +68,6 @@ const Sold = () => {
                 className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`}
                 style={{
                     ...sidebarStyle,
-                    // 🔥 BURASI EKLENDİ: Sidebar açılıp kapanma mantığı
                     width: isSidebarOpen ? '260px' : '0px',
                     opacity: isSidebarOpen ? 1 : 0,
                     overflow: 'hidden',
@@ -108,6 +118,8 @@ const Sold = () => {
 
             {/* 🛡️ MAIN CONTENT */}
             <div className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+
+                {/* HEADER */}
                 <header className="top-header" style={{ flexShrink: 0, zIndex: 10 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         {/* 🔥 Menü ikonuna onClick eklendi */}
@@ -116,7 +128,14 @@ const Sold = () => {
                         <span style={{ background: '#0f0', color: '#000', padding: '2px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>SUCCESSFUL</span>
                     </div>
                     <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic' }}>SOLD VEHICLES HISTORY</div>
-                    <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#666' }}>LOGOUT <LogOut size={16}/></div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+
+                        {/* ✅ 4. HEADER'A PARA BİRİMİ SEÇİCİSİ EKLENDİ */}
+                        <CurrencySelector onCurrencyChange={handleCurrencyChange} />
+
+                        <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#666' }}>LOGOUT <LogOut size={16}/></div>
+                    </div>
                 </header>
 
                 <div className="scrollable-area" style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
@@ -135,7 +154,12 @@ const Sold = () => {
                                     <tr key={car.id} style={{ borderBottom: '1px solid #f9f9f9' }}>
                                         <td style={{ padding: '20px', fontWeight: 900, fontSize: '18px' }}>{car.manufacturer}</td>
                                         <td style={{ padding: '20px' }}>{car.model}</td>
-                                        <td style={{ padding: '20px', fontWeight: 900, color: '#000' }}>${car.price.toLocaleString()}</td>
+
+                                        {/* ✅ 5. FİYAT GÖSTERİMİ GÜNCELLENDİ (ÇARPIM İŞLEMİ) */}
+                                        <td style={{ padding: '20px', fontWeight: 900, color: '#000' }}>
+                                            {currencySymbol} {(car.price * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                        </td>
+
                                         <td style={{ padding: '20px', color: '#666' }}>
                                             <span style={{ background: '#e8f5e9', color: '#2e7d32', padding: '4px 10px', borderRadius: '6px', fontSize: '10px', fontWeight: 900 }}>COMPLETED</span>
                                         </td>
@@ -146,9 +170,15 @@ const Sold = () => {
                     </div>
                 </div>
 
+                {/* FOOTER */}
                 <footer style={{ background: '#000', padding: '15px 35px', flexShrink: 0, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontSize: '11px', fontWeight: 900, width: '33%', textAlign: 'left' }}>SHOWING PAGE {currentPage + 1} OF {totalPages || 1}</div>
-                    <div style={{ fontSize: '11px', fontWeight: 900, width: '33%', textAlign: 'center' }}>TOTAL PROFITS EARNED: ${totalProfit.toLocaleString()}</div>
+
+                    {/* ✅ 6. TOPLAM KAR HESABI GÜNCELLENDİ */}
+                    <div style={{ fontSize: '11px', fontWeight: 900, width: '33%', textAlign: 'center' }}>
+                        TOTAL PROFITS EARNED: {currencySymbol} {(totalProfit * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </div>
+
                     <div style={{ display: 'flex', gap: '20px', width: '33%', justifyContent: 'flex-end' }}>
                         <button disabled={currentPage === 0} onClick={() => setCurrentPage(prev => prev - 1)} style={fBtnStyle(currentPage === 0)}>PREVIOUS PAGE</button>
                         <button disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage(prev => prev + 1)} style={fBtnStyle(currentPage >= totalPages - 1)}>NEXT PAGE</button>

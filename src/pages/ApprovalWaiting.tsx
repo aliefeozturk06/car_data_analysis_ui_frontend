@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
+import CurrencySelector from '../components/CurrencySelector'; // ✅ 1. IMPORT EKLENDİ
 import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, RotateCcw, XCircle } from 'lucide-react';
 
 const ApprovalWaiting = () => {
@@ -11,6 +12,16 @@ const ApprovalWaiting = () => {
     // UI State
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isCollectionOpen, setIsCollectionOpen] = useState(true);
+
+    // ✅ 2. PARA BİRİMİ STATE'LERİ EKLENDİ
+    const [currencyRate, setCurrencyRate] = useState(parseFloat(localStorage.getItem('currencyRate') || "1"));
+    const [currencySymbol, setCurrencySymbol] = useState(localStorage.getItem('currencySymbol') || "₺");
+
+    // ✅ 3. PARA BİRİMİ DEĞİŞTİRME FONKSİYONU EKLENDİ
+    const handleCurrencyChange = (rate, symbol) => {
+        setCurrencyRate(rate);
+        setCurrencySymbol(symbol);
+    };
 
     // Kullanıcı Bilgisi
     const userString = localStorage.getItem('user');
@@ -88,7 +99,14 @@ const ApprovalWaiting = () => {
                         <div style={{ fontSize: '12px', fontWeight: 800 }}>USER: {user.username?.toUpperCase()}</div>
                     </div>
                     <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic' }}>APPROVAL WAITING</div>
-                    <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#666' }}>LOGOUT <LogOut size={16}/></div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+
+                        {/* ✅ 4. HEADER'A PARA BİRİMİ SEÇİCİSİ EKLENDİ */}
+                        <CurrencySelector onCurrencyChange={handleCurrencyChange} />
+
+                        <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#666' }}>LOGOUT <LogOut size={16}/></div>
+                    </div>
                 </header>
 
                 <div className="scrollable-area" style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
@@ -119,14 +137,19 @@ const ApprovalWaiting = () => {
                             ) : requests.length === 0 ? (
                                 <tr><td colSpan={4} style={{ padding: '50px', textAlign: 'center', fontWeight: 900, color: '#ccc' }}>NO PENDING REQUESTS</td></tr>
                             ) : (
-                                requests.map((req: any) => (
+                                requests.map((req) => (
                                     <tr key={req.id} style={{ borderBottom: '1px solid #f9f9f9' }}>
                                         <td style={{ padding: '20px', fontWeight: 900, fontSize: '18px' }}>
                                             {(req.manufacturer || 'Unknown').toUpperCase()} <span style={{color:'#999', fontSize:'14px'}}>{req.model}</span>
                                         </td>
+
+                                        {/* ✅ 5. FİYAT GÖSTERİMİ GÜNCELLENDİ (ÇARPIM İŞLEMİ) */}
                                         <td style={{ padding: '20px', fontWeight: 900 }}>
-                                            {req.newPrice ? `$${req.newPrice.toLocaleString()}` : <span style={{color:'#ccc'}}>-</span>}
+                                            {req.newPrice ?
+                                                `${currencySymbol} ${(req.newPrice * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                                : <span style={{color:'#ccc'}}>-</span>}
                                         </td>
+
                                         <td style={{ padding: '20px', color: '#666', fontWeight: 700 }}>
                                             {req.newColor ? req.newColor.toUpperCase() : <span style={{color:'#ccc'}}>-</span>}
                                         </td>
