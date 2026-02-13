@@ -13,20 +13,25 @@ const Register = () => {
         setLoading(true);
 
         try {
+            // ✅ Senin orijinal payload yapın (role dahil)
+            // Eğer backend record'da role varsa burası böyle kalmalı.
             const payload = {
                 username: username.trim(),
                 password: password,
-                role: 'ROLE_USER'
             };
 
+            // URL'nin /api/auth/register olduğundan emin oluyoruz
             const response = await api.post('/auth/register', payload);
 
+            // Backend'den 200 veya 201 gelirse başarılı sayıyoruz
             if (response.status === 200 || response.status === 201) {
                 alert("Registration Successful!");
                 navigate('/login');
             }
         } catch (error: any) {
-            const msg = error.response?.data?.message || "Registration failed.";
+            console.error("Full Register Error:", error);
+            // Hata mesajını backend'den veya default olarak alıyoruz
+            const msg = error.response?.data || error.message || "Registration failed.";
             alert(`ERROR: ${msg}`);
         } finally {
             setLoading(false);
@@ -35,7 +40,6 @@ const Register = () => {
 
     return (
         <div style={{ height: '100vh', width: '100vw', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#f5f5f5' }}>
-            {/* 🛡️ Login Kartı ile Birebir: Tüm ekstra 'box-sizing' ve 'text-align' temizlendi */}
             <div style={{ backgroundColor: '#000', padding: '60px', borderRadius: '40px', width: '450px', boxShadow: '0 30px 60px rgba(0,0,0,0.3)' }}>
 
                 <h1 style={{ color: '#fff', fontSize: '26px', fontWeight: 900, fontStyle: 'italic', marginBottom: '10px' }}>CAR DATA ANALYSIS</h1>
