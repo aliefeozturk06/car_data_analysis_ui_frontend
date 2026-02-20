@@ -7,19 +7,20 @@ const DashboardLayout = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(false);
     const [isCollectionOpen, setIsCollectionOpen] = useState(true);
 
-    // Pagination state'i buradan yönetiliyor, sayfalar bunu güncelleyecek
     const [pagination, setPagination] = useState({
         currentPage: 0,
         totalPages: 1,
         totalElements: 0,
-        onPageChange: (newPage: number) => {} // Boş fonksiyon (Placeholder)
+        onPageChange: (newPage: number) => {}
     });
 
     const userString = localStorage.getItem('user');
     const userData = userString ? JSON.parse(userString) : {};
 
-    // Kullanıcının rolünü güvenli şekilde kontrol ediyoruz
-    const isUser = userData.role && (userData.role === "ROLE_USER" || JSON.stringify(userData.role).includes("USER"));
+    const role = userData.role || "";
+    const isUser = role === "ROLE_USER" || JSON.stringify(role).includes("USER");
+    const isAdmin = role === "ROLE_ADMIN" || JSON.stringify(role).includes("ADMIN");
+    const isModerator = role === "ROLE_MODERATOR" || JSON.stringify(role).includes("MODERATOR");
 
     const handleLogout = () => {
         localStorage.clear();
@@ -54,10 +55,15 @@ const DashboardLayout = () => {
                         <div>
                             <Link to="/my-cars" style={navItemStyle('/my-cars')} onClick={() => setSidebarOpen(false)}>• MY CARS</Link>
 
-                            {/* 🔥 Sadece USER rolündekiler "Onay Bekleyenler"i görür */}
                             {isUser && (
                                 <Link to="/approval-waiting" style={navItemStyle('/approval-waiting')} onClick={() => setSidebarOpen(false)}>
                                     • APPROVAL WAITING
+                                </Link>
+                            )}
+
+                            {(isAdmin || isModerator) && (
+                                <Link to="/approval-requests" style={navItemStyle('/approval-requests')} onClick={() => setSidebarOpen(false)}>
+                                    • APPROVAL REQUESTS
                                 </Link>
                             )}
 
@@ -65,10 +71,20 @@ const DashboardLayout = () => {
                             <Link to="/sold" style={navItemStyle('/sold')} onClick={() => setSidebarOpen(false)}>• SOLD</Link>
                         </div>
                     )}
+
+                    {isAdmin && (
+                        <div style={{ marginTop: '10px' }}>
+                            <div style={{ padding: '30px 30px 10px', fontSize: '10px', fontWeight: 900, color: '#e74c3c', letterSpacing: '1px' }}>
+                                ADMINISTRATION
+                            </div>
+                            <Link to="/admin" style={navItemStyle('/admin')} onClick={() => setSidebarOpen(false)}>
+                                • USER MANAGEMENT
+                            </Link>
+                        </div>
+                    )}
                 </nav>
             </div>
 
-            {/* Overlay (Sidebar açılınca arkadaki karartı) */}
             {isSidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 1999 }} />}
 
             {/* 🥪 HEADER */}

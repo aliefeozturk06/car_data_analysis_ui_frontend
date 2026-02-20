@@ -14,7 +14,7 @@ const CurrencySelector = ({ onCurrencyChange }: { onCurrencyChange: (rate: numbe
                     setRates(res.data);
                 }
             } catch (e) {
-                console.error("Kurlar alınamadı, varsayılan değerler kullanılacak.", e);
+                console.error("Currencies unavaible, optimized values will be used.", e);
             }
         };
         fetchRates();
@@ -31,10 +31,8 @@ const CurrencySelector = ({ onCurrencyChange }: { onCurrencyChange: (rate: numbe
 
         const symbol = currency === "TRY" ? "₺" : (currency === "USD" ? "$" : (currency === "EUR" ? "€" : "£"));
 
-        // Üst bileşene sağlam veri gönder
         onCurrencyChange(rate, symbol);
 
-        // Seçimi kaydet
         localStorage.setItem('currencyRate', rate.toString());
         localStorage.setItem('currencySymbol', symbol);
     };

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
-import CurrencySelector from '../components/CurrencySelector'; // ✅ 1. IMPORT EKLENDİ
+import CurrencySelector from '../components/CurrencySelector';
 import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, ShieldCheck } from 'lucide-react';
 
 const ForSale = () => {
@@ -9,42 +9,37 @@ const ForSale = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isCollectionOpen, setIsCollectionOpen] = useState(true);
 
-    // ✅ 2. PARA BİRİMİ STATE'LERİ EKLENDİ
     const [currencyRate, setCurrencyRate] = useState(parseFloat(localStorage.getItem('currencyRate') || "1"));
     const [currencySymbol, setCurrencySymbol] = useState(localStorage.getItem('currencySymbol') || "₺");
 
-    // ✅ 3. PARA BİRİMİ DEĞİŞTİRME FONKSİYONU EKLENDİ
     const handleCurrencyChange = (rate: number, symbol: string) => {
         setCurrencyRate(rate);
         setCurrencySymbol(symbol);
     };
 
-    // Kullanıcı Verisi
     const userString = localStorage.getItem('user');
     const user = userString ? JSON.parse(userString) : {};
 
-    // 🛡️ ROL KONTROLÜ
-    const isUser = user.role && (user.role === "ROLE_USER" || JSON.stringify(user.role).includes("USER"));
-    const isModerator = user.role === "ROLE_MODERATOR" || (user.role && user.role.includes("MODERATOR"));
+    const role = user.role || "";
+    const isUser = role === "ROLE_USER" || JSON.stringify(role).includes("USER");
+    const isAdmin = role === "ROLE_ADMIN" || JSON.stringify(role).includes("ADMIN");
+    const isModerator = role === "ROLE_MODERATOR" || JSON.stringify(role).includes("MODERATOR");
 
-    // Sayfalama
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
 
-    // 📡 VERİ ÇEKME (Sadece ON_SALE olanlar)
     const fetchCars = useCallback(async () => {
         try {
             const res = await api.get(`/purchase/my-cars`, {
                 params: {
                     username: user.username,
-                    status: 'ON_SALE', // 🟢 Sadece satılıkları getir
+                    status: 'ON_SALE',
                     page: currentPage,
                     size: 10
                 }
             });
 
-            // Backend List veya Page dönebilir, ikisini de yönetelim
             if (res.data && res.data.dtoList) {
                 setCars(res.data.dtoList);
                 setTotalPages(res.data.totalPages || 0);
@@ -59,7 +54,7 @@ const ForSale = () => {
                 setTotalElements(res.data.totalElements || 0);
             }
         } catch (e) {
-            console.error("Veri çekme hatası:", e);
+            console.error("Data processing error:", e);
             setCars([]);
         }
     }, [user.username, currentPage]);
@@ -69,7 +64,6 @@ const ForSale = () => {
     return (
         <div className="app-wrapper" style={{ height: '100vh', display: 'flex', overflow: 'hidden', backgroundColor: '#f5f5f5' }}>
 
-            {/* 🛡️ SIDEBAR (DİNAMİK AÇILIR/KAPANIR) */}
             <aside
                 className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`}
                 style={{
@@ -81,13 +75,10 @@ const ForSale = () => {
                 }}
             >
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
-
-                    {/* 1. HOME PAGE */}
                     <Link to="/" className="nav-item" style={navItemStyle}>
                         <Home size={22}/> HOME PAGE
                     </Link>
 
-                    {/* 2. MY COLLECTION (Açılır Menü) */}
                     <div
                         className="nav-item active"
                         style={{...navItemStyle, cursor: 'pointer', justifyContent: 'space-between', color: '#000'}}
@@ -101,34 +92,41 @@ const ForSale = () => {
                         <div style={{ paddingLeft: '20px', display:'flex', flexDirection:'column', gap:'5px' }}>
                             <Link to="/my-cars" style={subLinkStyle}>• MY CARS</Link>
 
-                            {/* ⚠️ SADECE USER GÖRÜR ⚠️ */}
                             {isUser && (
                                 <Link to="/approval-waiting" style={subLinkStyle}>• APPROVAL WAITING</Link>
                             )}
 
-                            {/* AKTİF SAYFA: FOR SALE (BOLD) */}
                             <Link to="/for-sale" style={{...subLinkStyle, fontWeight: 900, color: '#000'}}>• FOR SALE</Link>
-
                             <Link to="/sold" style={subLinkStyle}>• SOLD</Link>
                         </div>
                     )}
 
-                    {/* ⚠️ SADECE MODERATOR GÖRÜR (ARKA PLANSIZ, SADE) ⚠️ */}
-                    {isModerator && (
+                    {(isAdmin || isModerator) && (
                         <Link to="/approval-requests" style={moderatorBtnStyle}>
                             <ShieldCheck size={22}/> APPROVAL REQUESTS
                         </Link>
                     )}
+
+                    {isAdmin && (
+                        <div style={{ marginTop: '10px' }}>
+                            <div style={{ padding: '15px 15px 5px', fontSize: '10px', fontWeight: 900, color: '#e74c3c', letterSpacing: '1px' }}>
+                                ADMINISTRATION
+                            </div>
+                            <Link to="/admin" style={subLinkStyle}>
+                                • USER MANAGEMENT
+                            </Link>
+                            <Link to="/admin/car-stats" style={subLinkStyle}>
+                                • FLEET ANALYSIS
+                            </Link>
+                        </div>
+                    )}
                 </nav>
             </aside>
 
-            {/* 🛡️ MAIN CONTENT */}
             <div className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
 
-                {/* HEADER (Menü İkonu Bağlandı) */}
                 <header className="top-header" style={{ flexShrink: 0, zIndex: 10 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        {/* 🔥 Menü ikonuna onClick eklendi */}
                         <Menu onClick={() => setSidebarOpen(!isSidebarOpen)} size={24} style={{ cursor: 'pointer' }} />
 
                         <div style={{ fontSize: '12px', fontWeight: 800 }}>SELLER: {user.username?.toUpperCase()}</div>
@@ -137,15 +135,11 @@ const ForSale = () => {
                     <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic' }}>VEHICLES FOR SALE</div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-
-                        {/* ✅ 4. HEADER'A PARA BİRİMİ SEÇİCİSİ EKLENDİ */}
                         <CurrencySelector onCurrencyChange={handleCurrencyChange} />
-
                         <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#666' }}>LOGOUT <LogOut size={16}/></div>
                     </div>
                 </header>
 
-                {/* SCROLLABLE AREA */}
                 <div className="scrollable-area" style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
                     <div className="table-area" style={{ background: '#fff', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -166,7 +160,6 @@ const ForSale = () => {
                                         <td style={{ padding: '20px', fontWeight: 900, fontSize: '18px' }}>{car.manufacturer}</td>
                                         <td style={{ padding: '20px' }}>{car.model}</td>
 
-                                        {/* ✅ 5. FİYAT GÖSTERİMİ GÜNCELLENDİ (ÇARPIM İŞLEMİ) */}
                                         <td style={{ padding: '20px', fontWeight: 900 }}>
                                             {currencySymbol} {(car.price * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                         </td>
@@ -192,7 +185,6 @@ const ForSale = () => {
                     </div>
                 </div>
 
-                {/* FOOTER */}
                 <footer style={{ background: '#000', padding: '15px 30px', flexShrink: 0, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontSize: '11px', fontWeight: 900, width: '33%', textAlign: 'left' }}>SHOWING PAGE {currentPage + 1} OF {totalPages || 1}</div>
                     <div style={{ fontSize: '11px', fontWeight: 900, width: '33%', textAlign: 'center' }}>ACTIVE LISTINGS: {totalElements}</div>
@@ -206,32 +198,10 @@ const ForSale = () => {
     );
 };
 
-// --- STYLES ---
 const sidebarStyle = { width: '260px', background: '#fff', color: '#000', display: 'flex', flexDirection: 'column', borderRight: '1px solid #eee' };
-
-const navItemStyle = {
-    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 15px',
-    color: '#333', textDecoration: 'none', fontSize: '13px', fontWeight: 700,
-    borderRadius: '10px', marginBottom: '5px'
-};
-
-const subLinkStyle = {
-    display: 'block', padding: '8px 10px', color: '#666',
-    textDecoration: 'none', fontSize: '12px', fontWeight: 600,
-    marginBottom: '2px'
-};
-
-// 🔥 MODERATOR BUTONU (ŞEFFAF, SADE) 🔥
-const moderatorBtnStyle = {
-    display: 'flex', alignItems: 'center', gap: '12px',
-    padding: '12px 15px',
-    borderRadius: '10px',
-    background: 'transparent', // ŞEFFAF
-    color: '#333', // KOYU GRİ/SİYAH
-    textDecoration: 'none', fontSize: '13px', fontWeight: 700,
-    marginTop: '20px' // AYIRMAK İÇİN BOŞLUK
-};
-
+const navItemStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 15px', color: '#333', textDecoration: 'none', fontSize: '13px', fontWeight: 700, borderRadius: '10px', marginBottom: '5px' };
+const subLinkStyle = { display: 'block', padding: '8px 10px', color: '#666', textDecoration: 'none', fontSize: '12px', fontWeight: 600, marginBottom: '2px' };
+const moderatorBtnStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 15px', borderRadius: '10px', background: 'transparent', color: '#333', textDecoration: 'none', fontSize: '13px', fontWeight: 700, marginTop: '20px' };
 const fBtnStyle = (disabled: boolean) => ({ background: 'transparent', border: 'none', color: disabled ? '#444' : '#fff', cursor: disabled ? 'default' : 'pointer', fontWeight: 900, fontSize: '11px', transition: '0.3s' });
 
 export default ForSale;

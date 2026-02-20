@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
-import CurrencySelector from '../components/CurrencySelector'; // ✅ 1. IMPORT EKLENDİ
+import CurrencySelector from '../components/CurrencySelector';
 import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, ShieldCheck } from 'lucide-react';
 
 const Sold = () => {
@@ -9,30 +9,26 @@ const Sold = () => {
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isCollectionOpen, setIsCollectionOpen] = useState(true);
 
-    // ✅ 2. PARA BİRİMİ STATE'LERİ EKLENDİ
     const [currencyRate, setCurrencyRate] = useState(parseFloat(localStorage.getItem('currencyRate') || "1"));
     const [currencySymbol, setCurrencySymbol] = useState(localStorage.getItem('currencySymbol') || "₺");
 
-    // ✅ 3. PARA BİRİMİ DEĞİŞTİRME FONKSİYONU EKLENDİ
     const handleCurrencyChange = (rate: number, symbol: string) => {
         setCurrencyRate(rate);
         setCurrencySymbol(symbol);
     };
 
-    // Kullanıcı Verisi
     const userString = localStorage.getItem('user');
     const user = userString ? JSON.parse(userString) : {};
 
-    // 🛡️ ROL KONTROLÜ
-    const isUser = user.role && (user.role === "ROLE_USER" || JSON.stringify(user.role).includes("USER"));
-    const isModerator = user.role === "ROLE_MODERATOR" || (user.role && user.role.includes("MODERATOR"));
+    const role = user.role || "";
+    const isUser = role === "ROLE_USER" || JSON.stringify(role).includes("USER");
+    const isAdmin = role === "ROLE_ADMIN" || JSON.stringify(role).includes("ADMIN");
+    const isModerator = role === "ROLE_MODERATOR" || JSON.stringify(role).includes("MODERATOR");
 
-    // Sayfalama
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
 
-    // 📡 VERİ ÇEKME (sold-history endpointi)
     const fetchCars = useCallback(async () => {
         try {
             const res = await api.get(`/purchase/sold-history`, {
@@ -41,7 +37,6 @@ const Sold = () => {
                 }
             });
 
-            // Backend liste döndüğü için frontend tarafında sayfalama yapısına uyduruyoruz
             if (Array.isArray(res.data)) {
                 setCars(res.data);
                 setTotalElements(res.data.length);
@@ -50,20 +45,18 @@ const Sold = () => {
                 setCars(res.data.dtoList);
             }
         } catch (e) {
-            console.error("Satış geçmişi yüklenemedi:", e);
+            console.error("Failed to load sold history:", e);
             setCars([]);
         }
     }, [user.username]);
 
     useEffect(() => { fetchCars(); }, [fetchCars]);
 
-    // Toplam kar hesabı (KURA GÖRE ÇARPILDI)
     const totalProfit = cars.reduce((acc: any, curr: any) => acc + curr.price, 0);
 
     return (
         <div className="app-wrapper" style={{ height: '100vh', display: 'flex', overflow: 'hidden', backgroundColor: '#f5f5f5' }}>
 
-            {/* 🛡️ SIDEBAR (DİNAMİK AÇILIR/KAPANIR) */}
             <aside
                 className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`}
                 style={{
@@ -75,13 +68,10 @@ const Sold = () => {
                 }}
             >
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
-
-                    {/* 1. HOME PAGE */}
                     <Link to="/" className="nav-item" style={navItemStyle}>
                         <Home size={22}/> HOME PAGE
                     </Link>
 
-                    {/* 2. MY COLLECTION (Açılır Menü) */}
                     <div
                         className="nav-item active"
                         style={{...navItemStyle, cursor: 'pointer', justifyContent: 'space-between', color: '#000'}}
@@ -95,34 +85,41 @@ const Sold = () => {
                         <div style={{ paddingLeft: '20px', display:'flex', flexDirection:'column', gap:'5px' }}>
                             <Link to="/my-cars" style={subLinkStyle}>• MY CARS</Link>
 
-                            {/* ⚠️ SADECE USER GÖRÜR ⚠️ */}
                             {isUser && (
                                 <Link to="/approval-waiting" style={subLinkStyle}>• APPROVAL WAITING</Link>
                             )}
 
                             <Link to="/for-sale" style={subLinkStyle}>• FOR SALE</Link>
-
-                            {/* AKTİF SAYFA: SOLD (BOLD) */}
                             <Link to="/sold" style={{...subLinkStyle, fontWeight: 900, color: '#000'}}>• SOLD</Link>
                         </div>
                     )}
 
-                    {/* ⚠️ SADECE MODERATOR GÖRÜR (ARKA PLANSIZ, SADE) ⚠️ */}
-                    {isModerator && (
+                    {(isAdmin || isModerator) && (
                         <Link to="/approval-requests" style={moderatorBtnStyle}>
                             <ShieldCheck size={22}/> APPROVAL REQUESTS
                         </Link>
                     )}
+
+                    {isAdmin && (
+                        <div style={{ marginTop: '10px' }}>
+                            <div style={{ padding: '15px 15px 5px', fontSize: '10px', fontWeight: 900, color: '#e74c3c', letterSpacing: '1px' }}>
+                                ADMINISTRATION
+                            </div>
+                            <Link to="/admin" style={subLinkStyle}>
+                                • USER MANAGEMENT
+                            </Link>
+                            <Link to="/admin/car-stats" style={subLinkStyle}>
+                                • FLEET ANALYSIS
+                            </Link>
+                        </div>
+                    )}
                 </nav>
             </aside>
 
-            {/* 🛡️ MAIN CONTENT */}
             <div className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
 
-                {/* HEADER */}
                 <header className="top-header" style={{ flexShrink: 0, zIndex: 10 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        {/* 🔥 Menü ikonuna onClick eklendi */}
                         <Menu onClick={() => setSidebarOpen(!isSidebarOpen)} size={24} style={{ cursor: 'pointer' }} />
                         <div style={{ fontSize: '12px', fontWeight: 800 }}>ANALYST: {user.username?.toUpperCase()}</div>
                         <span style={{ background: '#0f0', color: '#000', padding: '2px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>SUCCESSFUL</span>
@@ -130,10 +127,7 @@ const Sold = () => {
                     <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic' }}>SOLD VEHICLES HISTORY</div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-
-                        {/* ✅ 4. HEADER'A PARA BİRİMİ SEÇİCİSİ EKLENDİ */}
                         <CurrencySelector onCurrencyChange={handleCurrencyChange} />
-
                         <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#666' }}>LOGOUT <LogOut size={16}/></div>
                     </div>
                 </header>
@@ -149,17 +143,13 @@ const Sold = () => {
                             </thead>
                             <tbody>
                             {cars.length === 0 ? <tr><td colSpan={4} style={{ padding: '50px', textAlign: 'center', fontWeight: 900, color: '#ccc' }}>NO SALES YET</td></tr> :
-                                // Client-side pagination
                                 cars.slice(currentPage * 10, (currentPage + 1) * 10).map((car: any) => (
                                     <tr key={car.id} style={{ borderBottom: '1px solid #f9f9f9' }}>
                                         <td style={{ padding: '20px', fontWeight: 900, fontSize: '18px' }}>{car.manufacturer}</td>
                                         <td style={{ padding: '20px' }}>{car.model}</td>
-
-                                        {/* ✅ 5. FİYAT GÖSTERİMİ GÜNCELLENDİ (ÇARPIM İŞLEMİ) */}
                                         <td style={{ padding: '20px', fontWeight: 900, color: '#000' }}>
                                             {currencySymbol} {(car.price * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                         </td>
-
                                         <td style={{ padding: '20px', color: '#666' }}>
                                             <span style={{ background: '#e8f5e9', color: '#2e7d32', padding: '4px 10px', borderRadius: '6px', fontSize: '10px', fontWeight: 900 }}>COMPLETED</span>
                                         </td>
@@ -170,15 +160,11 @@ const Sold = () => {
                     </div>
                 </div>
 
-                {/* FOOTER */}
                 <footer style={{ background: '#000', padding: '15px 35px', flexShrink: 0, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ fontSize: '11px', fontWeight: 900, width: '33%', textAlign: 'left' }}>SHOWING PAGE {currentPage + 1} OF {totalPages || 1}</div>
-
-                    {/* ✅ 6. TOPLAM KAR HESABI GÜNCELLENDİ */}
                     <div style={{ fontSize: '11px', fontWeight: 900, width: '33%', textAlign: 'center' }}>
                         TOTAL PROFITS EARNED: {currencySymbol} {(totalProfit * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </div>
-
                     <div style={{ display: 'flex', gap: '20px', width: '33%', justifyContent: 'flex-end' }}>
                         <button disabled={currentPage === 0} onClick={() => setCurrentPage(prev => prev - 1)} style={fBtnStyle(currentPage === 0)}>PREVIOUS PAGE</button>
                         <button disabled={currentPage >= totalPages - 1} onClick={() => setCurrentPage(prev => prev + 1)} style={fBtnStyle(currentPage >= totalPages - 1)}>NEXT PAGE</button>
@@ -189,32 +175,10 @@ const Sold = () => {
     );
 };
 
-// --- STYLES ---
 const sidebarStyle = { width: '260px', background: '#fff', color: '#000', display: 'flex', flexDirection: 'column', borderRight: '1px solid #eee' };
-
-const navItemStyle = {
-    display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 15px',
-    color: '#333', textDecoration: 'none', fontSize: '13px', fontWeight: 700,
-    borderRadius: '10px', marginBottom: '5px'
-};
-
-const subLinkStyle = {
-    display: 'block', padding: '8px 10px', color: '#666',
-    textDecoration: 'none', fontSize: '12px', fontWeight: 600,
-    marginBottom: '2px'
-};
-
-// 🔥 MODERATOR BUTONU (ŞEFFAF, SADE) 🔥
-const moderatorBtnStyle = {
-    display: 'flex', alignItems: 'center', gap: '12px',
-    padding: '12px 15px',
-    borderRadius: '10px',
-    background: 'transparent', // ŞEFFAF
-    color: '#333', // KOYU GRİ/SİYAH
-    textDecoration: 'none', fontSize: '13px', fontWeight: 700,
-    marginTop: '20px' // AYIRMAK İÇİN BOŞLUK
-};
-
+const navItemStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 15px', color: '#333', textDecoration: 'none', fontSize: '13px', fontWeight: 700, borderRadius: '10px', marginBottom: '5px' };
+const subLinkStyle = { display: 'block', padding: '8px 10px', color: '#666', textDecoration: 'none', fontSize: '12px', fontWeight: 600, marginBottom: '2px' };
+const moderatorBtnStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 15px', borderRadius: '10px', background: 'transparent', color: '#333', textDecoration: 'none', fontSize: '13px', fontWeight: 700, marginTop: '20px' };
 const fBtnStyle = (disabled: boolean) => ({ background: 'transparent', border: 'none', color: disabled ? '#444' : '#fff', cursor: disabled ? 'default' : 'pointer', fontWeight: 900, fontSize: '11px', transition: '0.3s' });
 
 export default Sold;

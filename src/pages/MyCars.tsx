@@ -1,30 +1,25 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
-import CurrencySelector from '../components/CurrencySelector'; // ✅ 1. IMPORT EKLENDİ
+import CurrencySelector from '../components/CurrencySelector';
 import { Home, Car, LogOut, Menu, Plus, Search, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ShieldCheck, RefreshCw, XCircle, DollarSign, Clock, X } from 'lucide-react';
 
 const MyCars = () => {
-    // Veri State'leri
     const [myCars, setMyCars] = useState([]);
     const [totalPages, setTotalPages] = useState(0);
     const [loading, setLoading] = useState(false);
 
-    // UI State'leri
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isCollectionOpen, setIsCollectionOpen] = useState(true);
 
-    // ✅ 2. PARA BİRİMİ STATE'LERİ EKLENDİ
     const [currencyRate, setCurrencyRate] = useState(parseFloat(localStorage.getItem('currencyRate') || "1"));
     const [currencySymbol, setCurrencySymbol] = useState(localStorage.getItem('currencySymbol') || "₺");
 
-    // ✅ 3. PARA BİRİMİ DEĞİŞTİRME FONKSİYONU EKLENDİ
     const handleCurrencyChange = (rate: number, symbol: string) => {
         setCurrencyRate(rate);
         setCurrencySymbol(symbol);
     };
 
-    // Filtre ve Sıralama
     const initialFilters = {
         page: 0, size: 10,
         manufacturer: '', model: '', minYear: '', maxYear: '',
@@ -33,22 +28,20 @@ const MyCars = () => {
     const [filters, setFilters] = useState(initialFilters);
     const [sorts, setSorts] = useState<Record<string, 'asc' | 'desc' | null>>({});
 
-    // Kullanıcı
     const userString = localStorage.getItem('user');
     const user = userString ? JSON.parse(userString) : {};
     const [balance, setBalance] = useState(user.balance || 0);
 
-    // Rol Kontrolü
-    const isUser = user.role && (user.role === "ROLE_USER" || JSON.stringify(user.role).includes("USER"));
-    const isModerator = user.role === "ROLE_MODERATOR" || (user.role && user.role.includes("MODERATOR"));
+    const role = user.role || "";
+    const isUser = role === "ROLE_USER" || JSON.stringify(role).includes("USER");
+    const isAdmin = role === "ROLE_ADMIN" || JSON.stringify(role).includes("ADMIN");
+    const isModerator = role === "ROLE_MODERATOR" || JSON.stringify(role).includes("MODERATOR");
 
-    // Modallar
     const [isFundsModalOpen, setIsFundsModalOpen] = useState(false);
     const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [amountToAdd, setAmountToAdd] = useState('');
 
-    // Formlar
     const [editingCar, setEditingCar] = useState<any>(null);
     const [updateForm, setUpdateForm] = useState({ price: 0, mileage: 0, color: '' });
 
@@ -56,14 +49,12 @@ const MyCars = () => {
         manufacturer: '', model: '', year: 2024, price: 0, color: '', mileage: 0
     });
 
-    // 📡 VERİ ÇEKME (FİLTRE ÇEVRİMİ EKLENDİ)
     const fetchMyCars = useCallback(async () => {
         setLoading(true);
         const sortParams = Object.entries(sorts)
             .filter(([_, dir]) => dir !== null)
             .map(([field, dir]) => `${field},${dir}`);
 
-        // 💰 Arama yaparken girilen fiyatları TL'ye çevirip backend'e yolluyoruz
         const searchFilters = {
             ...filters,
             priceMin: filters.priceMin ? Math.floor(Number(filters.priceMin) / currencyRate) : '',
@@ -92,64 +83,58 @@ const MyCars = () => {
                 setTotalPages(res.data.totalPages || 0);
             }
         } catch (e) {
-            console.error("Garaj verisi çekilemedi!", e);
+            console.error("Failed to fetch garage data!", e);
         } finally {
             setLoading(false);
         }
-    }, [filters, sorts, user.username, currencyRate]); // currencyRate eklendi
+    }, [filters, sorts, user.username, currencyRate]);
 
     useEffect(() => {
         fetchMyCars();
     }, [filters.page, sorts, fetchMyCars]);
 
-    // 💰 SATIŞA ÇIKAR
     const handleSellCar = async (carId: number) => {
-        if (!window.confirm("Bu aracı vitrine koymak istediğine emin misin?")) return;
+        if (!window.confirm("Are you sure you want to sell this car?")) return;
         try {
             await api.put(`/purchase/list-for-sale?username=${user.username}&carId=${carId}`);
-            alert("Araç satışa çıkarıldı!");
+            alert("The car is now on sale!");
             fetchMyCars();
-        } catch (e) { alert("Satış işlemi başarısız."); }
+        } catch (e) { alert("Failed to put the car on sale."); }
     };
 
-    // 🚫 SATIŞI İPTAL ET
     const handleCancelSale = async (carId: number) => {
-        if (!window.confirm("Satışı iptal edip aracı garaja geri çekmek istiyor musun?")) return;
+        if (!window.confirm("Are you sure you want to cancel the sale and return the car to your garage?")) return;
         try {
             await api.put(`/purchase/cancel-sale?username=${user.username}&carId=${carId}`);
-            alert("Satış iptal edildi, araç garajında.");
+            alert("Sale canceled. The car is back in your garage.");
             fetchMyCars();
-        } catch (e) { alert("İptal işlemi başarısız."); }
+        } catch (e) { alert("Failed to cancel the sale."); }
     };
 
     const handleCancelRequest = async (carId: number) => {
-        if (!window.confirm("Bekleyen güncelleme isteğini geri çekmek istiyor musun?")) return;
+        if (!window.confirm("Are you sure you want to cancel this waiting approval request?")) return;
         try {
             await api.post(`/purchase/cancel-update-request?username=${user.username}&carId=${carId}`);
-            alert("İstek iptal edildi.");
+            alert("Request successfully canceled.");
             fetchMyCars();
-        } catch (e) { alert("İstek iptali başarısız!"); }
+        } catch (e) { alert("Failed to cancel the request!"); }
     };
 
-    // 🚗 YENİ ARAÇ EKLE (ÇEVRİM EKLENDİ)
     const handleAddNewCar = async () => {
         try {
-            // 💰 Fiyatı TL'ye çevirerek kaydet
             const carToPost = {
                 ...newCar,
                 price: Math.floor(newCar.price / currencyRate)
             };
             await api.post(`/cars?username=${user.username}`, carToPost);
-            alert("Yeni araç eklendi!");
+            alert("New car added successfully!");
             setIsAddModalOpen(false);
             fetchMyCars();
-        } catch (e) { alert("Ekleme başarısız!"); }
+        } catch (e) { alert("Failed to add the new car!"); }
     };
 
-    // 🔧 GÜNCELLEME İSTEĞİ AÇ (KUR İLE GÖSTERİM)
     const handleUpdateOpen = (car: any) => {
         setEditingCar(car);
-        // Modal açıldığında fiyat kutusu seçili kura göre dolsun
         setUpdateForm({
             price: Math.floor(car.price * currencyRate),
             mileage: car.mileage || 0,
@@ -158,28 +143,23 @@ const MyCars = () => {
         setIsUpdateModalOpen(true);
     };
 
-    // 🔥🔥 GÜNCELLEME GÖNDER (ÇEVRİM EKLENDİ) 🔥🔥
     const handleUpdateSubmit = async () => {
         if (!editingCar) return;
 
-        // 1. Veri Doğrulama (Validation)
         const priceVal = Number(updateForm.price);
         const mileageVal = Number(updateForm.mileage);
 
         if (priceVal < 0 || mileageVal < 0) {
-            alert("Fiyat ve Kilometre 0'dan küçük olamaz!");
+            alert("Price and Mileage cannot be less than 0!");
             return;
         }
         if (!updateForm.color || updateForm.color.trim() === "") {
-            alert("Lütfen geçerli bir renk giriniz!");
+            alert("Please enter a valid color!");
             return;
         }
 
         try {
-            // 💰 Girilen fiyatı veritabanı için TL'ye çevir
             const priceInTL = Math.floor(priceVal / currencyRate);
-
-            // 2. Payload Hazırlama
             const payload = {
                 carId: editingCar.id,
                 username: user.username,
@@ -188,20 +168,14 @@ const MyCars = () => {
                 newMileage: mileageVal
             };
 
-            console.log("📤 Gönderilen İstek:", payload);
-
-            // 3. İstek Gönderme
             const res = await api.post('/purchase/create-update-request', payload);
-
-            // 4. Başarılı Sonuç
-            console.log("✅ Sunucu Cevabı:", res.data);
-            alert(res.data || "İstek başarıyla yöneticiye iletildi!");
+            alert(res.data || "Request successfully sent to the moderator!");
             setIsUpdateModalOpen(false);
             fetchMyCars();
 
         } catch (e: any) {
-            console.error("❌ Hata Detayı:", e);
-            let errorMessage = "Bilinmeyen bir hata oluştu.";
+            console.error("Error Detail:", e);
+            let errorMessage = "An unknown error occurred.";
             if (e.response) {
                 const data = e.response.data;
                 const status = e.response.status;
@@ -209,25 +183,23 @@ const MyCars = () => {
                     errorMessage = data;
                 } else if (typeof data === 'object' && data !== null) {
                     errorMessage = data.message || data.error || JSON.stringify(data);
-                    if (errorMessage === "{}") errorMessage = `Sunucu Hatası (Kod: ${status})`;
+                    if (errorMessage === "{}") errorMessage = `Server Error (Code: ${status})`;
                 } else {
-                    errorMessage = `Sunucu Hatası (Kod: ${status})`;
+                    errorMessage = `Server Error (Code: ${status})`;
                 }
             } else if (e.request) {
-                errorMessage = "Sunucuya ulaşılamıyor. İnternet bağlantınızı kontrol edin.";
+                errorMessage = "Server unreachable. Please check your network connection.";
             } else {
                 errorMessage = e.message;
             }
-            alert(`⚠️ İŞLEM BAŞARISIZ!\n\nSebep: ${errorMessage}`);
+            alert(`Process Unsuccessful!\n\nReason: ${errorMessage}`);
         }
     };
 
-    // 💵 PARA YÜKLE (ÇEVRİM EKLENDİ)
     const handleAddFunds = async () => {
         const amount = parseFloat(amountToAdd);
-        if (isNaN(amount) || amount <= 0) return alert("Miktar gir!");
+        if (isNaN(amount) || amount <= 0) return alert("Please enter a valid amount!");
 
-        // 💰 Yatırılan dövizi TL'ye çevir
         const amountInTL = amount / currencyRate;
 
         try {
@@ -236,11 +208,10 @@ const MyCars = () => {
             localStorage.setItem('user', JSON.stringify({ ...user, balance: res.data }));
             setIsFundsModalOpen(false);
             setAmountToAdd('');
-            alert(`${amount} ${currencySymbol} başarıyla yüklendi.`);
-        } catch (e) { alert("Hata!"); }
+            alert(`${amount} ${currencySymbol} successfully added to your balance.`);
+        } catch (e) { alert("Failed to add funds! An error occurred."); }
     };
 
-    // YARDIMCI FONKSİYONLAR
     const handleSort = (field: string) => {
         setSorts(prev => {
             const current = prev[field];
@@ -267,7 +238,6 @@ const MyCars = () => {
     return (
         <div className="app-wrapper" style={{ height: '100vh', display: 'flex', overflow: 'hidden', backgroundColor: '#f5f5f5' }}>
 
-            {/* 🛡️ SIDEBAR (AÇILIR/KAPANIR) */}
             <aside
                 className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`}
                 style={{
@@ -281,7 +251,6 @@ const MyCars = () => {
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
                     <Link to="/" className="nav-item" style={navItemStyle}><Home size={22}/> HOME PAGE</Link>
 
-                    {/* My Collection Menüsü */}
                     <div
                         className="nav-item active"
                         style={{...navItemStyle, cursor: 'pointer', justifyContent: 'space-between', color: '#000'}}
@@ -293,7 +262,6 @@ const MyCars = () => {
 
                     {isCollectionOpen && (
                         <div style={{ paddingLeft: '20px', display:'flex', flexDirection:'column', gap:'5px' }}>
-                            {/* MY CARS: ARKA PLANSIZ, SADECE BOLD */}
                             <Link to="/my-cars" style={{...subLinkStyle, fontWeight: 900, color: '#000'}}>• MY CARS</Link>
 
                             {isUser && <Link to="/approval-waiting" style={subLinkStyle}>• APPROVAL WAITING</Link>}
@@ -302,44 +270,51 @@ const MyCars = () => {
                         </div>
                     )}
 
-                    {/* MODERATOR BUTONU */}
-                    {isModerator && (
+                    {(isAdmin || isModerator) && (
                         <Link to="/approval-requests" style={moderatorBtnStyle}>
                             <ShieldCheck size={22}/> APPROVAL REQUESTS
                         </Link>
                     )}
+
+                    {isAdmin && (
+                        <div style={{ marginTop: '10px' }}>
+                            <div style={{ padding: '15px 15px 5px', fontSize: '10px', fontWeight: 900, color: '#e74c3c', letterSpacing: '1px' }}>
+                                ADMINISTRATION
+                            </div>
+                            <Link to="/admin" style={subLinkStyle}>
+                                • USER MANAGEMENT
+                            </Link>
+                            <Link to="/admin/car-stats" style={subLinkStyle}>
+                                • FLEET ANALYSIS
+                            </Link>
+                        </div>
+                    )}
                 </nav>
             </aside>
 
-            {/* ANA İÇERİK */}
             <div className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-
-                {/* HEADER */}
                 <header className="top-header" style={{ flexShrink: 0, zIndex: 10 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        {/* Menü İkonu */}
                         <Menu onClick={() => setSidebarOpen(!isSidebarOpen)} style={{ cursor: 'pointer' }} size={24} />
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <div style={{ fontSize: '12px', fontWeight: 800 }}>COLLECTION: {user.username?.toUpperCase()}</div>
-                            {isModerator && (
+                            {(isAdmin || isModerator) && (
                                 <div style={{ background: '#f39c12', color: '#000', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid #d35400' }}>
-                                    <ShieldCheck size={12} /> MODERATOR
+                                    <ShieldCheck size={12} /> {isAdmin ? 'ADMIN' : 'MODERATOR'}
                                 </div>
                             )}
                         </div>
 
                         <div style={{ background: '#1a1a1a', padding: '6px 15px', borderRadius: '8px', border: '1px solid #333', color: '#fff', fontSize: '13px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <                           span>BALANCE: {currencySymbol} {(balance * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>                            <button onClick={() => setIsFundsModalOpen(true)} style={{ background: '#fff', color: '#000', border: 'none', borderRadius: '4px', padding: '1px 5px', cursor: 'pointer' }}><Plus size={14}/></button>
+                            <span>BALANCE: {currencySymbol} {(balance * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                            <button onClick={() => setIsFundsModalOpen(true)} style={{ background: '#fff', color: '#000', border: 'none', borderRadius: '4px', padding: '1px 5px', cursor: 'pointer' }}><Plus size={14}/></button>
                         </div>
                     </div>
                     <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic' }}>MY PRIVATE GARAGE</div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-
-                        {/* ✅ 4. HEADER'A PARA BİRİMİ SEÇİCİSİ EKLENDİ */}
                         <CurrencySelector onCurrencyChange={handleCurrencyChange} />
-
                         <div onClick={() => setIsAddModalOpen(true)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 900, fontSize: '11px', background: '#000', color: '#fff', padding: '8px 15px', borderRadius: '8px' }}>
                             <Plus size={16}/> ADD CAR
                         </div>
@@ -347,10 +322,7 @@ const MyCars = () => {
                     </div>
                 </header>
 
-                {/* SCROLLABLE AREA */}
                 <div className="scrollable-area" style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
-
-                    {/* FİLTRELER */}
                     <div style={{ background: '#000', padding: '25px', borderRadius: '20px', marginBottom: '30px' }}>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr) 200px', gap: '20px', marginBottom: '20px' }}>
                             <div><label style={labelStyle}>MANUFACTURER</label><input name="manufacturer" value={filters.manufacturer} onChange={handleFilterChange} placeholder="Search My Brands..." style={inputStyle} /></div>
@@ -367,7 +339,6 @@ const MyCars = () => {
                         </div>
                     </div>
 
-                    {/* TABLO */}
                     <div className="table-area" style={{ background: '#fff', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
@@ -388,13 +359,9 @@ const MyCars = () => {
                                     <td style={{ padding: '20px', fontWeight: 900, fontSize: '18px' }}>{car.manufacturer}</td>
                                     <td style={{ padding: '20px', color: '#666' }}>{car.model}</td>
                                     <td style={{ padding: '20px', fontWeight: 700 }}>{car.year}</td>
-
-                                    {/* ✅ 5. FİYAT GÖSTERİMİ KUR İLE ÇARPILDI */}
                                     <td style={{ padding: '20px', fontWeight: 900, fontSize: '18px' }}>
                                         {currencySymbol} {(car.price * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                     </td>
-
-                                    {/* STATUS KOLONU */}
                                     <td style={{ padding: '20px' }}>
                                         <div style={{display:'flex', gap:'5px', flexDirection:'column'}}>
                                             <span style={{
@@ -413,8 +380,6 @@ const MyCars = () => {
                                             )}
                                         </div>
                                     </td>
-
-                                    {/* ACTION KOLONU */}
                                     <td style={{ padding: '20px' }}>
                                         <div style={{ display: 'flex', gap: '10px' }}>
                                             {car.hasPendingUpdate ? (
@@ -423,7 +388,7 @@ const MyCars = () => {
                                                 </button>
                                             ) : (
                                                 <button onClick={() => handleUpdateOpen(car)} style={{ ...btnStyle, background: '#eee', color: '#000' }}>
-                                                    <RefreshCw size={14}/> {isModerator ? 'EDIT' : 'REQUEST'}
+                                                    <RefreshCw size={14}/> {(isAdmin || isModerator) ? 'EDIT' : 'REQUEST'}
                                                 </button>
                                             )}
                                             {car.status === 'ON_SALE' ? (
@@ -444,7 +409,6 @@ const MyCars = () => {
                     </div>
                 </div>
 
-                {/* FOOTER */}
                 <footer style={{
                     background: '#000', padding: '15px 30px', flexShrink: 0,
                     display: 'flex', justifyContent: 'space-between',
@@ -464,12 +428,10 @@ const MyCars = () => {
                 </footer>
             </div>
 
-            {/* MODALLAR */}
             {isFundsModalOpen && (
                 <div style={modalOverlayStyle}>
                     <div style={modalBoxStyle}>
                         <h2 style={modalTitleStyle}>ADD FUNDS</h2>
-                        {/* ✅ PLACEHOLDER GÜNCELLENDİ */}
                         <input type="number" placeholder={`Amount (${currencySymbol})`} value={amountToAdd} onChange={(e) => setAmountToAdd(e.target.value)} style={inputStyle} />
                         <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
                             <button onClick={handleAddFunds} style={{ ...primaryBtnStyle, flex: 1 }}>CONFIRM</button>
@@ -492,7 +454,6 @@ const MyCars = () => {
                             <div><label style={labelStyle}>YEAR</label><input style={inputStyle} type="number" onChange={(e) => setNewCar({...newCar, year: parseInt(e.target.value)})} /></div>
                             <div><label style={labelStyle}>COLOR</label><input style={inputStyle} onChange={(e) => setNewCar({...newCar, color: e.target.value})} /></div>
                             <div><label style={labelStyle}>MILEAGE</label><input style={inputStyle} type="number" onChange={(e) => setNewCar({...newCar, mileage: parseInt(e.target.value)})} /></div>
-                            {/* ✅ LABEL GÜNCELLENDİ */}
                             <div><label style={labelStyle}>PRICE ({currencySymbol})</label><input style={inputStyle} type="number" onChange={(e) => setNewCar({...newCar, price: parseInt(e.target.value)})} /></div>
                         </div>
                         <button onClick={handleAddNewCar} style={{ ...primaryBtnStyle, marginTop: '30px' }}>CONFIRM AND ADD</button>
@@ -528,7 +489,6 @@ const MyCars = () => {
                             </div>
 
                             <div>
-                                {/* ✅ LABEL GÜNCELLENDİ */}
                                 <label style={{...labelStyle, color: '#000'}}>PRICE ({currencySymbol})</label>
                                 <input
                                     type="number"
@@ -547,7 +507,6 @@ const MyCars = () => {
     );
 };
 
-// --- STYLES ---
 const sidebarStyle = { width: '260px', background: '#fff', color: '#000', display: 'flex', flexDirection: 'column', borderRight: '1px solid #eee' };
 const navItemStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 15px', color: '#333', textDecoration: 'none', fontSize: '13px', fontWeight: 700, borderRadius: '10px', marginBottom: '5px' };
 const subLinkStyle = { display: 'block', padding: '8px 10px', color: '#666', textDecoration: 'none', fontSize: '12px', fontWeight: 600, marginBottom: '2px' };
