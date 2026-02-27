@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
-import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, ShieldCheck } from 'lucide-react';
+import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, ShieldCheck, User } from 'lucide-react'; // User ikonu eklendi
 
 const Sold = () => {
     const [cars, setCars] = useState([]);
@@ -68,6 +68,10 @@ const Sold = () => {
                 }}
             >
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
+                    <Link to="/profile" className="nav-item" style={navItemStyle}>
+                        <User size={22}/> PROFILE
+                    </Link>
+
                     <Link to="/" className="nav-item" style={navItemStyle}>
                         <Home size={22}/> HOME PAGE
                     </Link>
@@ -118,17 +122,24 @@ const Sold = () => {
 
             <div className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
 
-                <header className="top-header" style={{ flexShrink: 0, zIndex: 10 }}>
+                <header className="top-header" style={{ flexShrink: 0, zIndex: 10, background: '#000', padding: '0 30px', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #333' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                        <Menu onClick={() => setSidebarOpen(!isSidebarOpen)} size={24} style={{ cursor: 'pointer' }} />
-                        <div style={{ fontSize: '12px', fontWeight: 800 }}>ANALYST: {user.username?.toUpperCase()}</div>
-                        <span style={{ background: '#0f0', color: '#000', padding: '2px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>SUCCESSFUL</span>
+                        <Menu onClick={() => setSidebarOpen(!isSidebarOpen)} size={24} style={{ cursor: 'pointer', color: '#fff' }} />
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Link to="/profile" style={{ fontSize: '12px', fontWeight: 800, color: '#fff', textDecoration: 'none' }}>
+                                ANALYST: {user.username?.toUpperCase()}
+                            </Link>
+                            <span style={{ background: '#0f0', color: '#000', padding: '2px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>SUCCESSFUL</span>
+                        </div>
                     </div>
-                    <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic' }}>SOLD VEHICLES HISTORY</div>
+                    <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic', color: '#fff' }}>SOLD VEHICLES HISTORY</div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         <CurrencySelector onCurrencyChange={handleCurrencyChange} />
-                        <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#666' }}>LOGOUT <LogOut size={16}/></div>
+                        <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#999', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            LOGOUT <LogOut size={16}/>
+                        </div>
                     </div>
                 </header>
 
@@ -160,7 +171,7 @@ const Sold = () => {
                     </div>
                 </div>
 
-                <footer style={{ background: '#000', padding: '15px 35px', flexShrink: 0, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <footer style={{ background: '#000', padding: '15px 35px', flexShrink: 0, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #333' }}>
                     <div style={{ fontSize: '11px', fontWeight: 900, width: '33%', textAlign: 'left' }}>SHOWING PAGE {currentPage + 1} OF {totalPages || 1}</div>
                     <div style={{ fontSize: '11px', fontWeight: 900, width: '33%', textAlign: 'center' }}>
                         TOTAL PROFITS EARNED: {currencySymbol} {(totalProfit * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}

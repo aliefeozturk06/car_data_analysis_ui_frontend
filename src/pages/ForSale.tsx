@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
-import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, ShieldCheck } from 'lucide-react';
+import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, ShieldCheck, User } from 'lucide-react'; // User ikonu eklendi
 
 const ForSale = () => {
     const [cars, setCars] = useState([]);
@@ -75,6 +75,10 @@ const ForSale = () => {
                 }}
             >
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
+                    <Link to="/profile" className="nav-item" style={navItemStyle}>
+                        <User size={22}/> PROFILE
+                    </Link>
+
                     <Link to="/" className="nav-item" style={navItemStyle}>
                         <Home size={22}/> HOME PAGE
                     </Link>
@@ -129,8 +133,12 @@ const ForSale = () => {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         <Menu onClick={() => setSidebarOpen(!isSidebarOpen)} size={24} style={{ cursor: 'pointer' }} />
 
-                        <div style={{ fontSize: '12px', fontWeight: 800 }}>SELLER: {user.username?.toUpperCase()}</div>
-                        <span style={{ background: '#000', color: '#fff', padding: '2px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>LISTING</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <Link to="/profile" style={{ fontSize: '12px', fontWeight: 800, color: '#fff', textDecoration: 'none' }}>
+                                SELLER: {user.username?.toUpperCase()}
+                            </Link>
+                            <span style={{ background: '#000', color: '#fff', padding: '2px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>LISTING</span>
+                        </div>
                     </div>
                     <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic' }}>VEHICLES FOR SALE</div>
 

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
-import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, RotateCcw, XCircle, ShieldCheck } from 'lucide-react';
+import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, RotateCcw, XCircle, ShieldCheck, User } from 'lucide-react'; // User ikonu eklendi
 
 const ApprovalWaiting = () => {
     const [requests, setRequests] = useState([]);
@@ -59,6 +59,10 @@ const ApprovalWaiting = () => {
 
             <aside className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`} style={sidebarStyle}>
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
+                    <Link to="/profile" className="nav-item" style={navItemStyle}>
+                        <User size={22}/> PROFILE
+                    </Link>
+
                     <Link to="/" className="nav-item" style={navItemStyle}><Home size={22}/> HOME PAGE</Link>
 
                     <div className="nav-item active" style={{...navItemStyle, cursor: 'pointer', justifyContent: 'space-between'}} onClick={() => setIsCollectionOpen(!isCollectionOpen)}>
@@ -106,7 +110,10 @@ const ApprovalWaiting = () => {
                 <header className="top-header" style={headerStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         <Menu onClick={() => setSidebarOpen(!isSidebarOpen)} style={{ cursor: 'pointer', color: '#fff' }} size={24} />
-                        <div style={{ fontSize: '12px', fontWeight: 800, color: '#fff' }}>USER: {user.username?.toUpperCase()}</div>
+
+                        <Link to="/profile" style={{ fontSize: '12px', fontWeight: 800, color: '#fff', textDecoration: 'none' }}>
+                            USER: {user.username?.toUpperCase()}
+                        </Link>
                     </div>
                     <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic', color: '#fff' }}>APPROVAL WAITING</div>
 

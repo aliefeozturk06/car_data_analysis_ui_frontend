@@ -116,6 +116,10 @@ const AdminDashboard = () => {
                 }}
             >
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
+                    <Link to="/profile" className="nav-item" style={navItemStyle}>
+                        <User size={22}/> PROFILE
+                    </Link>
+
                     <Link to="/" className="nav-item" style={navItemStyle}><Home size={22}/> HOME PAGE</Link>
 
                     <div
@@ -165,7 +169,9 @@ const AdminDashboard = () => {
                         <Menu onClick={() => setSidebarOpen(!isSidebarOpen)} style={{ cursor: 'pointer', color: '#fff' }} size={24} />
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ fontSize: '12px', fontWeight: 800, color: '#fff' }}>USERNAME: {user.username?.toUpperCase()}</div>
+                            <Link to="/profile" style={{ fontSize: '12px', fontWeight: 800, color: '#fff', textDecoration: 'none' }}>
+                                USERNAME: {user.username?.toUpperCase()}
+                            </Link>
                             {isAdmin && (
                                 <div style={{ background: '#f39c12', color: '#000', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid #d35400' }}>
                                     <ShieldCheck size={12} /> ADMIN

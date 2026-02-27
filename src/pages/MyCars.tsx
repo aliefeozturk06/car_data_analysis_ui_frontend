@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
-import { Home, Car, LogOut, Menu, Plus, Search, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ShieldCheck, RefreshCw, XCircle, DollarSign, Clock, X } from 'lucide-react';
+import { Home, Car, LogOut, Menu, Plus, Search, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ShieldCheck, RefreshCw, XCircle, DollarSign, Clock, X, Edit2, User } from 'lucide-react'; // User ikonu eklendi
 
 const MyCars = () => {
     const [myCars, setMyCars] = useState([]);
@@ -169,7 +169,9 @@ const MyCars = () => {
             };
 
             const res = await api.post('/purchase/create-update-request', payload);
-            alert(res.data || "Request successfully sent to the moderator!");
+
+            alert(res.data);
+
             setIsUpdateModalOpen(false);
             fetchMyCars();
 
@@ -249,6 +251,11 @@ const MyCars = () => {
                 }}
             >
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
+                    {/* 🔥 PROFILE ARTIK EN TEPEDE 🔥 */}
+                    <Link to="/profile" className="nav-item" style={navItemStyle}>
+                        <User size={22}/> PROFILE
+                    </Link>
+
                     <Link to="/" className="nav-item" style={navItemStyle}><Home size={22}/> HOME PAGE</Link>
 
                     <div
@@ -298,7 +305,9 @@ const MyCars = () => {
                         <Menu onClick={() => setSidebarOpen(!isSidebarOpen)} style={{ cursor: 'pointer' }} size={24} />
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{ fontSize: '12px', fontWeight: 800 }}>COLLECTION: {user.username?.toUpperCase()}</div>
+                            <Link to="/profile" style={{ fontSize: '12px', fontWeight: 800, color: '#fff', textDecoration: 'none' }}>
+                                COLLECTION: {user.username?.toUpperCase()}
+                            </Link>
                             {(isAdmin || isModerator) && (
                                 <div style={{ background: '#f39c12', color: '#000', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid #d35400' }}>
                                     <ShieldCheck size={12} /> {isAdmin ? 'ADMIN' : 'MODERATOR'}
@@ -387,8 +396,8 @@ const MyCars = () => {
                                                     <XCircle size={14}/> CANCEL REQ
                                                 </button>
                                             ) : (
-                                                <button onClick={() => handleUpdateOpen(car)} style={{ ...btnStyle, background: '#eee', color: '#000' }}>
-                                                    <RefreshCw size={14}/> {(isAdmin || isModerator) ? 'EDIT' : 'REQUEST'}
+                                                <button onClick={() => handleUpdateOpen(car)} style={{ ...btnStyle, background: (isAdmin || isModerator) ? '#3498db' : '#eee', color: (isAdmin || isModerator) ? '#fff' : '#000' }}>
+                                                    {(isAdmin || isModerator) ? <><Edit2 size={14}/> EDIT</> : <><RefreshCw size={14}/> REQUEST</>}
                                                 </button>
                                             )}
                                             {car.status === 'ON_SALE' ? (
@@ -465,7 +474,9 @@ const MyCars = () => {
                 <div style={modalOverlayStyle}>
                     <div style={{ ...modalBoxStyle, background: '#fff', border: 'none' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h2 style={{ ...modalTitleStyle, color: '#000' }}>UPDATE VEHICLE</h2>
+                            <h2 style={{ ...modalTitleStyle, color: '#000' }}>
+                                {(isAdmin || isModerator) ? 'EDIT VEHICLE' : 'UPDATE REQUEST'}
+                            </h2>
                             <X onClick={() => setIsUpdateModalOpen(false)} style={{ color: '#000', cursor: 'pointer' }} size={24} />
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -498,7 +509,9 @@ const MyCars = () => {
                                 />
                             </div>
 
-                            <button onClick={handleUpdateSubmit} style={{ ...primaryBtnStyle, background: '#000', color: '#fff', marginTop: '10px' }}>SEND REQUEST</button>
+                            <button onClick={handleUpdateSubmit} style={{ ...primaryBtnStyle, background: (isAdmin || isModerator) ? '#3498db' : '#000', color: '#fff', marginTop: '10px' }}>
+                                {(isAdmin || isModerator) ? 'SAVE CHANGES' : 'SEND REQUEST'}
+                            </button>
                         </div>
                     </div>
                 </div>

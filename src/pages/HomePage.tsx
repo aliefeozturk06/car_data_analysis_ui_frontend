@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
 import {
     Home, Car, LogOut, Menu, Plus, Search, RotateCcw,
-    ChevronLeft, ChevronRight, X, ShieldCheck, ChevronUp, ChevronDown
+    ChevronLeft, ChevronRight, X, ShieldCheck, ChevronUp, ChevronDown, User
 } from 'lucide-react';
 
 const HomePage = () => {
@@ -171,6 +171,10 @@ const HomePage = () => {
                 }}
             >
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
+                    <Link to="/profile" className="nav-item" style={navItemStyle}>
+                        <User size={22}/> PROFILE
+                    </Link>
+
                     <Link to="/" className="nav-item active" style={navItemStyle}><Home size={22}/> HOME PAGE</Link>
 
                     <div
@@ -185,11 +189,7 @@ const HomePage = () => {
                     {isCollectionOpen && (
                         <div style={{ paddingLeft: '20px', display:'flex', flexDirection:'column', gap:'5px' }}>
                             <Link to="/my-cars" style={subLinkStyle}>• MY CARS</Link>
-
-                            {isUser && (
-                                <Link to="/approval-waiting" style={subLinkStyle}>• APPROVAL WAITING</Link>
-                            )}
-
+                            {isUser && <Link to="/approval-waiting" style={subLinkStyle}>• APPROVAL WAITING</Link>}
                             <Link to="/for-sale" style={subLinkStyle}>• FOR SALE</Link>
                             <Link to="/sold" style={subLinkStyle}>• SOLD</Link>
                         </div>
@@ -223,7 +223,9 @@ const HomePage = () => {
                         <Menu onClick={() => setSidebarOpen(!isSidebarOpen)} style={{ cursor: 'pointer', color: '#fff' }} size={24} />
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <div style={{ fontSize: '12px', fontWeight: 800, color: '#fff' }}>USERNAME: {user.username?.toUpperCase()}</div>
+                            <Link to="/profile" style={{ fontSize: '12px', fontWeight: 800, color: '#fff', textDecoration: 'none', cursor: 'pointer' }}>
+                                USERNAME: {user.username?.toUpperCase()}
+                            </Link>
                             {(isAdmin || isModerator) && (
                                 <div style={{ background: '#f39c12', color: '#000', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid #d35400' }}>
                                     <ShieldCheck size={12} /> {isAdmin ? 'ADMIN' : 'MODERATOR'}

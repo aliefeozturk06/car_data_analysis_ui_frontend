@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ProfilePage from './pages/ProfilePage';
 import HomePage from './pages/HomePage';
 import MyCars from './pages/MyCars';
 import ForSale from './pages/ForSale';
@@ -28,6 +29,7 @@ function App() {
                 <Route path="/my-cars" element={<ProtectedRoute><MyCars /></ProtectedRoute>} />
                 <Route path="/for-sale" element={<ProtectedRoute><ForSale /></ProtectedRoute>} />
                 <Route path="/sold" element={<ProtectedRoute><Sold /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
 
                 <Route
