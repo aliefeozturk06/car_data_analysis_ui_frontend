@@ -4,12 +4,12 @@ import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
 import {
     Home, Car, LogOut, Menu, Plus, Search, RotateCcw,
-    ChevronLeft, ChevronRight, X, ShieldCheck, ChevronUp, ChevronDown, User
+    ChevronLeft, ChevronRight, X, ShieldCheck, ChevronUp, ChevronDown, User, MapPin
 } from 'lucide-react';
 
 const HomePage = () => {
     const [cars, setCars] = useState([]);
-    const [totalPages, setTotalPages] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isCollectionOpen, setIsCollectionOpen] = useState(true);
     const [loading, setLoading] = useState(false);
@@ -23,7 +23,8 @@ const HomePage = () => {
     };
 
     const initialFilters = {
-        page: 0, size: 10,
+        page: 0,
+        size: 10,
         manufacturer: '', model: '',
         minYear: '', maxYear: '',
         color: '',
@@ -64,11 +65,18 @@ const HomePage = () => {
 
         try {
             const res = await api.get('/cars', {
-                params: { ...searchFilters, sort: sortParams },
+                params: {
+                    ...searchFilters,
+                    sort: sortParams.length > 0 ? sortParams : undefined
+                },
                 paramsSerializer: { indexes: null }
             });
-            setCars(res.data.cars || []);
-            setTotalPages(res.data.totalPages || 0);
+
+            const carData = res.data.cars || res.data.content || [];
+            const totalP = res.data.totalPages !== undefined ? res.data.totalPages : 1;
+
+            setCars(carData);
+            setTotalPages(totalP > 0 ? totalP : 1);
         } catch (e) {
             console.error("Analysis Error!", e);
         } finally {
@@ -80,8 +88,17 @@ const HomePage = () => {
         fetchCars();
     }, [filters.page, sorts, fetchCars]);
 
-    const handlePrevPage = () => filters.page > 0 && setFilters(p => ({ ...p, page: p.page - 1 }));
-    const handleNextPage = () => filters.page < totalPages - 1 && setFilters(p => ({ ...p, page: p.page + 1 }));
+    const handlePrevPage = () => {
+        if (filters.page > 0) {
+            setFilters(p => ({ ...p, page: p.page - 1 }));
+        }
+    };
+
+    const handleNextPage = () => {
+        if (filters.page < totalPages - 1) {
+            setFilters(p => ({ ...p, page: p.page + 1 }));
+        }
+    };
 
     const handleSort = (field: string) => {
         setSorts(prev => {
@@ -105,49 +122,41 @@ const HomePage = () => {
     };
 
     const handleBuyCar = async (carId: number, carPrice: number) => {
-        if (balance < carPrice) return alert("Insufficient balance! Please add funds to your account.");
-        if (!window.confirm("You are about to add this car to your collection. Do you confirm?")) return;
+        if (balance < carPrice) return alert("Insufficient balance!");
+        if (!window.confirm("Confirm purchase?")) return;
 
         try {
             await api.post(`/purchase/buy?username=${user.username}&carId=${carId}`);
             const newBalance = balance - carPrice;
             setBalance(newBalance);
             localStorage.setItem('user', JSON.stringify({ ...user, balance: newBalance }));
-            alert("Congratulations! The car is yours.");
+            alert("Success!");
             fetchCars();
         } catch (e) {
-            alert("Purchase unsuccessful! An error occurred or the car was already sold.");
+            alert("Error!");
         }
     };
 
     const handleAddFunds = async () => {
         const amount = parseFloat(amountToAdd);
-        if (isNaN(amount) || amount <= 0) return alert("Please enter a valid amount!");
-
+        if (isNaN(amount) || amount <= 0) return alert("Invalid amount!");
         const amountInTL = amount / currencyRate;
-
         try {
             const res = await api.put(`/users/add-balance?username=${user.username}&amount=${amountInTL}`);
             setBalance(res.data);
             localStorage.setItem('user', JSON.stringify({ ...user, balance: res.data }));
             setIsFundsModalOpen(false);
             setAmountToAdd('');
-            alert(`${amount} ${currencySymbol} successfully added to your balance.`);
-        } catch (e) { alert("Failed to add funds! An error occurred."); }
+        } catch (e) { alert("Error!"); }
     };
 
     const handleAddNewCar = async () => {
         try {
-            const carToPost = {
-                ...newCar,
-                price: Math.floor(newCar.price / currencyRate)
-            };
-
+            const carToPost = { ...newCar, price: Math.floor(newCar.price / currencyRate) };
             await api.post(`/cars?username=${user.username}`, carToPost);
-            alert("New car added successfully!");
             setIsAddModalOpen(false);
             fetchCars();
-        } catch (e) { alert("An error occurred while adding the car!"); }
+        } catch (e) { alert("Error!"); }
     };
 
     const getSortIndicator = (field: string) => {
@@ -175,7 +184,7 @@ const HomePage = () => {
                         <User size={22}/> PROFILE
                     </Link>
 
-                    <Link to="/" className="nav-item active" style={navItemStyle}><Home size={22}/> HOME PAGE</Link>
+                    <Link to="/" className="nav-item active" style={{...navItemStyle, color: '#000'}}><Home size={22}/> HOME PAGE</Link>
 
                     <div
                         className="nav-item"
@@ -241,7 +250,7 @@ const HomePage = () => {
                         </div>
                     </div>
 
-                    <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic', color: '#fff' }}>CAR DATA ANALYSIS</div>
+                    <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic', color: '#fff' }}>MARKETPLACE</div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
                         <CurrencySelector onCurrencyChange={handleCurrencyChange} />
@@ -285,44 +294,69 @@ const HomePage = () => {
                         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <thead>
                             <tr style={{ textAlign: 'left', borderBottom: '1px solid #eee' }}>
-                                <th onClick={() => handleSort('manufacturer')} style={{ padding: '20px', cursor:'pointer' }}>MANUFACTURER {getSortIndicator('manufacturer')}</th>
-                                <th onClick={() => handleSort('model')} style={{ padding: '20px', cursor:'pointer' }}>MODEL {getSortIndicator('model')}</th>
-                                <th onClick={() => handleSort('year')} style={{ padding: '20px', cursor:'pointer' }}>YEAR {getSortIndicator('year')}</th>
-                                <th onClick={() => handleSort('price')} style={{ padding: '20px', cursor:'pointer' }}>PRICE {getSortIndicator('price')}</th>
-                                <th onClick={() => handleSort('color')} style={{ padding: '20px', cursor:'pointer' }}>COLOR {getSortIndicator('color')}</th>
-                                <th style={{ padding: '20px' }}>ACTION</th>
+                                <th onClick={() => handleSort('manufacturer')} style={{ padding: '20px', cursor:'pointer', fontSize: '11px', fontWeight: 900, color: '#888' }}>MANUFACTURER {getSortIndicator('manufacturer')}</th>
+                                <th onClick={() => handleSort('model')} style={{ padding: '20px', cursor:'pointer', fontSize: '11px', fontWeight: 900, color: '#888' }}>MODEL {getSortIndicator('model')}</th>
+                                <th onClick={() => handleSort('year')} style={{ padding: '20px', cursor:'pointer', fontSize: '11px', fontWeight: 900, color: '#888' }}>YEAR {getSortIndicator('year')}</th>
+                                <th onClick={() => handleSort('price')} style={{ padding: '20px', cursor:'pointer', fontSize: '11px', fontWeight: 900, color: '#888' }}>PRICE {getSortIndicator('price')}</th>
+                                <th onClick={() => handleSort('color')} style={{ padding: '20px', cursor:'pointer', fontSize: '11px', fontWeight: 900, color: '#888' }}>COLOR {getSortIndicator('color')}</th>
+                                <th onClick={() => handleSort('distance')} style={{ padding: '20px', cursor:'pointer', fontSize: '11px', fontWeight: 900, color: '#888' }}>LOCATION {getSortIndicator('distance')}</th>
+                                <th style={{ padding: '20px', fontSize: '11px', fontWeight: 900, color: '#888' }}>ACTION</th>
                             </tr>
                             </thead>
                             <tbody>
                             {cars.map((car: any) => (
-                                <tr key={car.id} style={{ borderBottom: '1px solid #f9f9f9' }}>
-                                    <td style={{ padding: '20px', fontWeight: 900, fontSize: '18px' }}>{car.manufacturer}</td>
-                                    <td style={{ padding: '20px', color: '#666' }}>{car.model}</td>
-                                    <td style={{ padding: '20px', fontWeight: 700 }}>{car.year}</td>
-                                    <td style={{ padding: '20px', fontWeight: 900, fontSize: '18px' }}>
+                                <tr key={car.id} style={{ borderBottom: '1px solid #f9f9f9', transition: '0.2s' }}>
+                                    <td style={{ padding: '20px', fontWeight: 900, fontSize: '16px', color: '#000' }}>{car.manufacturer.toUpperCase()}</td>
+                                    <td style={{ padding: '20px', color: '#666', fontWeight: 700, fontSize: '14px' }}>{car.model}</td>
+                                    <td style={{ padding: '20px', fontWeight: 700, fontSize: '14px' }}>{car.year}</td>
+                                    <td style={{ padding: '20px', fontWeight: 900, fontSize: '16px', color: '#27ae60' }}>
                                         {currencySymbol} {(car.price * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                     </td>
-                                    <td style={{ padding: '20px', color: '#666', fontWeight: 700 }}>{car.color?.toUpperCase()}</td>
+                                    <td style={{ padding: '20px', color: '#666', fontWeight: 700, fontSize: '14px' }}>{car.color?.toUpperCase()}</td>
+
+                                    <td style={{ padding: '20px', fontWeight: 700, color: '#444', fontSize: '13px' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <MapPin size={14} color="#3498db"/>
+                                                {car.sellerLocation ? car.sellerLocation.toUpperCase() : 'UNKNOWN'}
+                                            </div>
+                                            {car.distance !== undefined && car.distance !== null && (
+                                                <div style={{ fontSize: '10px', color: '#27ae60', fontWeight: 900, paddingLeft: '20px' }}>
+                                                    {car.distance.toFixed(1)} KM AWAY
+                                                </div>
+                                            )}
+                                        </div>
+                                    </td>
+
                                     <td style={{ padding: '20px' }}>
-                                        <button className="auth-button" style={{ padding: '8px 20px', fontSize: '11px', width: 'auto' }} onClick={() => handleBuyCar(car.id, car.price)}>BUY</button>
+                                        <button style={{ padding: '8px 20px', fontSize: '11px', fontWeight: 900, background: '#000', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }} onClick={() => handleBuyCar(car.id, car.price)}>BUY</button>
                                     </td>
                                 </tr>
                             ))}
-                            {cars.length === 0 && !loading && (
-                                <tr>
-                                    <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#999', fontWeight: 700 }}>NO CARS FOUND FOR SALE.</td>
-                                </tr>
-                            )}
                             </tbody>
                         </table>
                     </div>
                 </div>
 
                 <footer style={{ background: '#000', padding: '15px 30px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff', borderTop: '1px solid #333', zIndex: 10 }}>
-                    <div style={{ fontSize: '11px', fontWeight: 900 }}>SHOWING PAGE {filters.page + 1} OF {totalPages || 1}</div>
+                    <div style={{ fontSize: '11px', fontWeight: 900 }}>
+                        SHOWING PAGE {filters.page + 1} OF {totalPages}
+                    </div>
                     <div style={{ display: 'flex', gap: '10px' }}>
-                        <button onClick={handlePrevPage} disabled={filters.page === 0} style={{ ...pBtnStyle, opacity: filters.page === 0 ? 0.3 : 1 }}><ChevronLeft size={18} /> PREVIOUS</button>
-                        <button onClick={handleNextPage} disabled={filters.page >= totalPages - 1} style={{ ...pBtnStyle, opacity: filters.page >= totalPages - 1 ? 0.3 : 1 }}>NEXT <ChevronRight size={18} /></button>
+                        <button
+                            onClick={handlePrevPage}
+                            disabled={filters.page === 0 || loading}
+                            style={{ ...pBtnStyle, opacity: (filters.page === 0 || loading) ? 0.3 : 1 }}
+                        >
+                            <ChevronLeft size={18} /> PREVIOUS
+                        </button>
+                        <button
+                            onClick={handleNextPage}
+                            disabled={filters.page >= totalPages - 1 || loading}
+                            style={{ ...pBtnStyle, opacity: (filters.page >= totalPages - 1 || loading) ? 0.3 : 1 }}
+                        >
+                            NEXT <ChevronRight size={18} />
+                        </button>
                     </div>
                 </footer>
             </div>
