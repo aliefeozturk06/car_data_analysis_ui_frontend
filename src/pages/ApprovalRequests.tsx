@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
+import UserProfilePicture from '../components/UserProfilePicture'; // 🔥 Yeni eklendi
 import {
     Home, Car, LogOut, Menu, CheckCircle, Plus,
     ShieldCheck, ChevronDown, ChevronUp, User, Clock, RotateCcw, ChevronLeft, ChevronRight, X
@@ -234,9 +235,9 @@ const ApprovalRequests = () => {
                             ) : displayedRequests.map((req: any) => (
                                 <tr key={req.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
                                     <td style={{ padding: '20px', fontWeight: 700 }}>
-                                        <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-                                            <div style={{background:'#eee', padding:'6px', borderRadius:'50%'}}><User size={14}/></div>
-                                            @{req.username}
+                                        <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                                            <UserProfilePicture username={req.username} />
+                                            <span style={{ fontSize: '14px' }}>@{req.username}</span>
                                         </div>
                                     </td>
 
@@ -362,6 +363,7 @@ const ApprovalRequests = () => {
     );
 };
 
+// ... stiller (sidebarStyle, navItemStyle vb.) aynen kalıyor ...
 const sidebarStyle = {
     background: '#fff',
     color: '#000',

@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
 import {
-    Home, Car, LogOut, Menu, ShieldCheck, ChevronDown, ChevronUp, User, CheckCircle, Search, Plus, X, Edit2, Save, MapPin
+    Home, Car, LogOut, Menu, ShieldCheck, ChevronDown, ChevronUp, User, CheckCircle, Search, Plus, X, Edit2, Save, MapPin, Camera, Trash2
 } from 'lucide-react';
 
 const ProfilePage = () => {
@@ -44,6 +44,10 @@ const ProfilePage = () => {
     const [selectedProvinceId, setSelectedProvinceId] = useState('');
     const [selectedDistrictName, setSelectedDistrictName] = useState('');
 
+    // 🔥 GÜNCELLENDİ: String URL yerine Blob URL tutacağız
+    const [profilePicBlob, setProfilePicBlob] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
+
     const [ownedCars, setOwnedCars] = useState<any[]>([]);
     const [onSaleCars, setOnSaleCars] = useState<any[]>([]);
     const [soldCars, setSoldCars] = useState<any[]>([]);
@@ -51,6 +55,38 @@ const ProfilePage = () => {
     const [isOwnedOpen, setIsOwnedOpen] = useState(true);
     const [isOnSaleOpen, setIsOnSaleOpen] = useState(false);
     const [isSoldOpen, setIsSoldOpen] = useState(false);
+
+    // 🔥 YENİ: Fotoğrafı yetkili (tokenlı) şekilde çeken fonksiyon
+    const fetchProfilePicture = useCallback(async () => {
+        if (!user.username) return;
+        try {
+            // responseType: 'blob' ham binary veriyi almak için şart!
+            const response = await api.get(`/users/${user.username}/profile-picture`, {
+                responseType: 'blob'
+            });
+
+            if (response.data && response.data.size > 0) {
+                // Gelen byte'ları tarayıcının src içinde kullanabileceği bir URL'e çeviriyoruz
+                const imageObjectURL = URL.createObjectURL(response.data);
+                setProfilePicBlob(imageObjectURL);
+            } else {
+                setProfilePicBlob(null);
+            }
+        } catch (err) {
+            console.error("Profile picture could not be fetched (maybe it doesn't exist yet).");
+            setProfilePicBlob(null);
+        }
+    }, [user.username]);
+
+    // Sayfa açıldığında fotoğrafı çek
+    useEffect(() => {
+        fetchProfilePicture();
+
+        // Memory leak önlemek için bileşen kapandığında URL'i temizle
+        return () => {
+            if (profilePicBlob) URL.revokeObjectURL(profilePicBlob);
+        };
+    }, [fetchProfilePicture]);
 
     useEffect(() => {
         const fetchProvinces = async () => {
@@ -127,6 +163,45 @@ const ProfilePage = () => {
     useEffect(() => {
         fetchUserStats();
     }, [fetchUserStats]);
+
+    const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            return alert("Please select a valid image file (JPG/PNG).");
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            setIsUploading(true);
+            await api.post(`/users/${user.username}/upload-profile-picture`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+
+            // 🔥 BAŞARILI: Fotoğrafı hemen tekrar çekiyoruz
+            await fetchProfilePicture();
+            alert("Profile picture updated successfully!");
+        } catch (err) {
+            console.error("Upload failed:", err);
+            alert("Failed to upload profile picture.");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleProfilePicDelete = async () => {
+        if (!window.confirm("Are you sure you want to delete your profile picture?")) return;
+        try {
+            await api.delete(`/users/${user.username}/profile-picture`);
+            setProfilePicBlob(null); // Resmi temizle
+            alert("Profile picture deleted.");
+        } catch (err) {
+            alert("Failed to delete picture.");
+        }
+    };
 
     const handleAddFunds = async () => {
         const amount = parseFloat(amountToAdd);
@@ -322,9 +397,82 @@ const ProfilePage = () => {
                     <div style={{ width: '100%', maxWidth: '800px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
                         <div style={{ background: '#000', borderRadius: '20px', padding: '40px', color: '#fff', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', display: 'flex', flexWrap: 'wrap', gap: '40px', alignItems: 'center', flexShrink: 0 }}>
-                            <div style={{ width: '120px', height: '120px', borderRadius: '50%', background: '#222', display: 'flex', justifyContent: 'center', alignItems: 'center', border: '4px solid #333', flexShrink: 0 }}>
-                                <User size={60} color="#fff" />
+                            <div style={{ position: 'relative', width: '140px', height: '140px', flexShrink: 0 }}>
+                                <div style={{
+                                    width: '140px',
+                                    height: '140px',
+                                    borderRadius: '50%',
+                                    background: '#222',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
+                                    border: '4px solid #333',
+                                    overflow: 'hidden',
+                                    position: 'relative'
+                                }}>
+                                    {isUploading ? (
+                                        <div style={{ color: '#fff', fontSize: '10px', fontWeight: 900 }}>UPLOADING...</div>
+                                    ) : profilePicBlob ? (
+                                        <img
+                                            src={profilePicBlob}
+                                            alt="Profile"
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        />
+                                    ) : (
+                                        <User size={60} color="#fff" />
+                                    )}
+                                </div>
+
+                                <label
+                                    htmlFor="profile-upload"
+                                    style={{
+                                        position: 'absolute',
+                                        bottom: '5px',
+                                        right: '5px',
+                                        background: '#3498db',
+                                        width: '36px',
+                                        height: '36px',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        cursor: 'pointer',
+                                        border: '3px solid #000',
+                                        zIndex: 10
+                                    }}
+                                >
+                                    <Camera size={18} color="#fff" />
+                                    <input
+                                        id="profile-upload"
+                                        type="file"
+                                        hidden
+                                        accept="image/*"
+                                        onChange={handleProfilePicUpload}
+                                    />
+                                </label>
+
+                                <div
+                                    onClick={handleProfilePicDelete}
+                                    style={{
+                                        position: 'absolute',
+                                        top: '5px',
+                                        right: '5px',
+                                        background: '#e74c3c',
+                                        width: '28px',
+                                        height: '28px',
+                                        borderRadius: '50%',
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                        alignItems: 'center',
+                                        cursor: 'pointer',
+                                        border: '2px solid #000',
+                                        zIndex: 10
+                                    }}
+                                >
+                                    <Trash2 size={14} color="#fff" />
+                                </div>
                             </div>
+
                             <div style={{ flex: 1, minWidth: '250px' }}>
 
                                 {isEditingUsername ? (
