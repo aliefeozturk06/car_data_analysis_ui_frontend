@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
-import { Home, Car, LogOut, Menu, Plus, Search, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ShieldCheck, RefreshCw, XCircle, DollarSign, Clock, X, Edit2, User } from 'lucide-react'; // User ikonu eklendi
+import { Home, Car, LogOut, Menu, Plus, Search, RotateCcw, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, ShieldCheck, RefreshCw, XCircle, DollarSign, Clock, X, Edit2, User, MessageSquare } from 'lucide-react';
 
 const MyCars = () => {
     const [myCars, setMyCars] = useState([]);
@@ -251,9 +251,12 @@ const MyCars = () => {
                 }}
             >
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
-                    {/* 🔥 PROFILE ARTIK EN TEPEDE 🔥 */}
                     <Link to="/profile" className="nav-item" style={navItemStyle}>
                         <User size={22}/> PROFILE
+                    </Link>
+
+                    <Link to="/messages" className="nav-item" style={navItemStyle}>
+                        <MessageSquare size={22}/> MESSAGES
                     </Link>
 
                     <Link to="/" className="nav-item" style={navItemStyle}><Home size={22}/> HOME PAGE</Link>
@@ -300,7 +303,7 @@ const MyCars = () => {
             </aside>
 
             <div className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-                <header className="top-header" style={{ flexShrink: 0, zIndex: 10 }}>
+                <header className="top-header" style={{ flexShrink: 0, zIndex: 10, background: '#000', color: '#fff', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 30px', borderBottom: '1px solid #333' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         <Menu onClick={() => setSidebarOpen(!isSidebarOpen)} style={{ cursor: 'pointer' }} size={24} />
 
@@ -324,10 +327,12 @@ const MyCars = () => {
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         <CurrencySelector onCurrencyChange={handleCurrencyChange} />
-                        <div onClick={() => setIsAddModalOpen(true)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 900, fontSize: '11px', background: '#000', color: '#fff', padding: '8px 15px', borderRadius: '8px' }}>
+                        <div onClick={() => setIsAddModalOpen(true)} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 900, fontSize: '11px', background: '#333', color: '#fff', padding: '8px 15px', borderRadius: '8px' }}>
                             <Plus size={16}/> ADD CAR
                         </div>
-                        <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#666' }}>LOGOUT <LogOut size={16}/></div>
+                        <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#999', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            LOGOUT <LogOut size={16}/>
+                        </div>
                     </div>
                 </header>
 
@@ -418,11 +423,7 @@ const MyCars = () => {
                     </div>
                 </div>
 
-                <footer style={{
-                    background: '#000', padding: '15px 30px', flexShrink: 0,
-                    display: 'flex', justifyContent: 'space-between',
-                    alignItems: 'center', color: '#fff', borderTop: '1px solid #333', zIndex: 10
-                }}>
+                <footer style={{ background: '#000', padding: '15px 30px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff', borderTop: '1px solid #333', zIndex: 10 }}>
                     <div style={{ fontSize: '11px', fontWeight: 900 }}>
                         SHOWING PAGE {filters.page + 1} OF {totalPages || 1}
                     </div>

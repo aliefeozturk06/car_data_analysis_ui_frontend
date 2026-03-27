@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
 import {
-    Home, Car, LogOut, Menu, ShieldCheck, ChevronDown, ChevronUp, User, CheckCircle, Search, Plus, X, Edit2, Save, MapPin, Camera, Trash2
+    Home, Car, LogOut, Menu, ShieldCheck, ChevronDown, ChevronUp, User, CheckCircle, Search, Plus, X, Edit2, Save, MapPin, Camera, Trash2, MessageSquare
 } from 'lucide-react';
 
 const ProfilePage = () => {
@@ -44,7 +44,7 @@ const ProfilePage = () => {
     const [selectedProvinceId, setSelectedProvinceId] = useState('');
     const [selectedDistrictName, setSelectedDistrictName] = useState('');
 
-    // 🔥 GÜNCELLENDİ: String URL yerine Blob URL tutacağız
+    // Blob URL tutacağız
     const [profilePicBlob, setProfilePicBlob] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
 
@@ -56,33 +56,28 @@ const ProfilePage = () => {
     const [isOnSaleOpen, setIsOnSaleOpen] = useState(false);
     const [isSoldOpen, setIsSoldOpen] = useState(false);
 
-    // 🔥 YENİ: Fotoğrafı yetkili (tokenlı) şekilde çeken fonksiyon
+    // Fotoğrafı yetkili (tokenlı) şekilde çeken fonksiyon
     const fetchProfilePicture = useCallback(async () => {
         if (!user.username) return;
         try {
-            // responseType: 'blob' ham binary veriyi almak için şart!
             const response = await api.get(`/users/${user.username}/profile-picture`, {
                 responseType: 'blob'
             });
 
             if (response.data && response.data.size > 0) {
-                // Gelen byte'ları tarayıcının src içinde kullanabileceği bir URL'e çeviriyoruz
                 const imageObjectURL = URL.createObjectURL(response.data);
                 setProfilePicBlob(imageObjectURL);
             } else {
                 setProfilePicBlob(null);
             }
         } catch (err) {
-            console.error("Profile picture could not be fetched (maybe it doesn't exist yet).");
+            console.error("Profile picture could not be fetched.");
             setProfilePicBlob(null);
         }
     }, [user.username]);
 
-    // Sayfa açıldığında fotoğrafı çek
     useEffect(() => {
         fetchProfilePicture();
-
-        // Memory leak önlemek için bileşen kapandığında URL'i temizle
         return () => {
             if (profilePicBlob) URL.revokeObjectURL(profilePicBlob);
         };
@@ -180,8 +175,6 @@ const ProfilePage = () => {
             await api.post(`/users/${user.username}/upload-profile-picture`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-
-            // 🔥 BAŞARILI: Fotoğrafı hemen tekrar çekiyoruz
             await fetchProfilePicture();
             alert("Profile picture updated successfully!");
         } catch (err) {
@@ -196,7 +189,7 @@ const ProfilePage = () => {
         if (!window.confirm("Are you sure you want to delete your profile picture?")) return;
         try {
             await api.delete(`/users/${user.username}/profile-picture`);
-            setProfilePicBlob(null); // Resmi temizle
+            setProfilePicBlob(null);
             alert("Profile picture deleted.");
         } catch (err) {
             alert("Failed to delete picture.");
@@ -206,9 +199,7 @@ const ProfilePage = () => {
     const handleAddFunds = async () => {
         const amount = parseFloat(amountToAdd);
         if (isNaN(amount) || amount <= 0) return alert("Please enter a valid amount!");
-
         const amountInTL = amount / currencyRate;
-
         try {
             const res = await api.put(`/users/add-balance?username=${user.username}&amount=${amountInTL}`);
             setBalance(res.data);
@@ -225,34 +216,28 @@ const ProfilePage = () => {
             setIsEditingUsername(false);
             return;
         }
-
         try {
             await api.put(`/users/update-username?currentUsername=${user.username}&newUsername=${newUsername}`);
             alert("Username successfully updated! For security reasons, please log in again.");
             localStorage.clear();
             window.location.href = '/login';
         } catch (e: any) {
-            alert("Failed to update username! It might already be taken or endpoint is missing.");
+            alert("Failed to update username!");
         }
     };
 
     const handleUpdateLocation = async () => {
         const provinceObj = provinces.find(p => p.id.toString() === selectedProvinceId);
         if (!provinceObj || !selectedDistrictName) return alert("Please select both Province and District!");
-
         const combinedLocation = `${provinceObj.name}, ${selectedDistrictName}`;
-
         if (combinedLocation === currentLocation) {
             setIsEditingLocation(false);
             return;
         }
-
         try {
             await api.put(`/users/update-location?username=${user.username}&newLocation=${combinedLocation}`);
-
             setCurrentLocation(combinedLocation);
             localStorage.setItem('user', JSON.stringify({ ...user, location: combinedLocation }));
-
             alert("Location successfully updated!");
             setIsEditingLocation(false);
         } catch (e: any) {
@@ -270,7 +255,6 @@ const ProfilePage = () => {
                 </div>
                 {isOpen ? <ChevronUp size={20} color="#000" /> : <ChevronDown size={20} color="#999" />}
             </div>
-
             {isOpen && (
                 <div style={{ padding: '20px 25px', background: '#fafafa', maxHeight: '400px', overflowY: 'auto' }}>
                     {loading ? (
@@ -318,6 +302,10 @@ const ProfilePage = () => {
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
                     <Link to="/profile" className="nav-item active" style={{...navItemStyle, color: '#000'}}>
                         <User size={22}/> PROFILE
+                    </Link>
+
+                    <Link to="/messages" className="nav-item" style={navItemStyle}>
+                        <MessageSquare size={22}/> MESSAGES
                     </Link>
 
                     <Link to="/" className="nav-item" style={navItemStyle}><Home size={22}/> HOME PAGE</Link>
@@ -505,7 +493,6 @@ const ProfilePage = () => {
                                             <option value="">İl Seçin</option>
                                             {provinces.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                                         </select>
-
                                         <select
                                             value={selectedDistrictName}
                                             onChange={(e) => setSelectedDistrictName(e.target.value)}
@@ -515,7 +502,6 @@ const ProfilePage = () => {
                                             <option value="">İlçe Seçin</option>
                                             {districts.map(d => <option key={d.name} value={d.name}>{d.name}</option>)}
                                         </select>
-
                                         <button onClick={handleUpdateLocation} style={{ background: '#27ae60', color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '8px', fontWeight: 900, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px' }}>SAVE</button>
                                         <button onClick={() => { setIsEditingLocation(false); setSelectedProvinceId(''); setSelectedDistrictName(''); }} style={{ background: '#e74c3c', color: '#fff', border: 'none', padding: '10px 15px', borderRadius: '8px', fontWeight: 900, cursor: 'pointer', fontSize: '11px' }}><X size={14}/></button>
                                     </div>
@@ -555,7 +541,6 @@ const ProfilePage = () => {
                             onClick={() => setIsOwnedOpen(!isOwnedOpen)}
                             cars={ownedCars}
                         />
-
                         <AccordionList
                             title="VEHICLES ON SALE"
                             count={onSaleCars.length}
@@ -564,7 +549,6 @@ const ProfilePage = () => {
                             onClick={() => setIsOnSaleOpen(!isOnSaleOpen)}
                             cars={onSaleCars}
                         />
-
                         <AccordionList
                             title="SUCCESSFULLY SOLD"
                             count={soldCars.length}
@@ -573,7 +557,6 @@ const ProfilePage = () => {
                             onClick={() => setIsSoldOpen(!isSoldOpen)}
                             cars={soldCars}
                         />
-
                     </div>
                 </div>
             </div>

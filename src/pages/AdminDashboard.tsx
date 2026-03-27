@@ -3,13 +3,12 @@ import { adminService, type UserAdminResponseDTO } from '../api/adminService';
 import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
 import {
-    Home, Car, LogOut, Menu, ShieldCheck, ChevronDown, ChevronUp, Users, Wallet, ShieldAlert, User, X
+    Home, Car, LogOut, Menu, ShieldCheck, ChevronDown, ChevronUp, Users, Wallet, ShieldAlert, User, X, MessageSquare
 } from 'lucide-react';
 
 const AdminDashboard = () => {
     const [users, setUsers] = useState<UserAdminResponseDTO[]>([]);
     const [loading, setLoading] = useState(true);
-
     const [sorts, setSorts] = useState<Record<string, 'asc' | 'desc' | null>>({});
 
     const userString = localStorage.getItem('user');
@@ -21,7 +20,6 @@ const AdminDashboard = () => {
     const isModerator = role === "ROLE_MODERATOR" || JSON.stringify(role).includes("MODERATOR");
 
     const [balance, setBalance] = useState(user.balance || 0);
-
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const [isCollectionOpen, setIsCollectionOpen] = useState(true);
 
@@ -50,10 +48,8 @@ const AdminDashboard = () => {
 
     const handleRoleChange = async (userId: number, currentRole: string, newRole: string) => {
         if (currentRole === newRole) return;
-
         const isConfirmed = window.confirm(`User role will be changed to ${newRole.replace('ROLE_', '')}. Are you sure?`);
         if (!isConfirmed) return;
-
         try {
             await adminService.updateUserRole(userId, newRole);
             alert("Role successfully updated!");
@@ -85,13 +81,10 @@ const AdminDashboard = () => {
     const sortedUsers = [...users].sort((a, b) => {
         for (const [field, dir] of Object.entries(sorts)) {
             if (!dir) continue;
-
             let valA = a[field as keyof UserAdminResponseDTO];
             let valB = b[field as keyof UserAdminResponseDTO];
-
             if (typeof valA === 'string') valA = valA.toLowerCase();
             if (typeof valB === 'string') valB = valB.toLowerCase();
-
             if (valA < valB) return dir === 'asc' ? -1 : 1;
             if (valA > valB) return dir === 'asc' ? 1 : -1;
         }
@@ -118,6 +111,10 @@ const AdminDashboard = () => {
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
                     <Link to="/profile" className="nav-item" style={navItemStyle}>
                         <User size={22}/> PROFILE
+                    </Link>
+
+                    <Link to="/messages" className="nav-item" style={navItemStyle}>
+                        <MessageSquare size={22}/> MESSAGES
                     </Link>
 
                     <Link to="/" className="nav-item" style={navItemStyle}><Home size={22}/> HOME PAGE</Link>
@@ -167,7 +164,6 @@ const AdminDashboard = () => {
                 <header className="top-header" style={headerStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         <Menu onClick={() => setSidebarOpen(!isSidebarOpen)} style={{ cursor: 'pointer', color: '#fff' }} size={24} />
-
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <Link to="/profile" style={{ fontSize: '12px', fontWeight: 800, color: '#fff', textDecoration: 'none' }}>
                                 USERNAME: {user.username?.toUpperCase()}
@@ -178,14 +174,11 @@ const AdminDashboard = () => {
                                 </div>
                             )}
                         </div>
-
                         <div style={{ background: '#1a1a1a', padding: '6px 15px', borderRadius: '8px', border: '1px solid #333', color: '#fff', fontSize: '13px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span>BALANCE: {currencySymbol} {(balance * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                         </div>
                     </div>
-
                     <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic', color: '#fff' }}>USER MANAGEMENT</div>
-
                     <div style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
                         <CurrencySelector onCurrencyChange={handleCurrencyChange} />
                         <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#999', display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -195,7 +188,6 @@ const AdminDashboard = () => {
                 </header>
 
                 <div className="scrollable-area" style={{ flex: 1, overflowY: 'auto', padding: '30px' }}>
-
                     {loading ? (
                         <div style={{ padding: '40px', fontWeight: 900, textAlign: 'center' }}>LOADING...</div>
                     ) : (
@@ -221,21 +213,11 @@ const AdminDashboard = () => {
                                 <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                                     <thead style={{ borderBottom: '1px solid #eee' }}>
                                     <tr>
-                                        <th onClick={() => handleSort('id')} style={{ padding: '20px', fontSize: '12px', fontWeight: 900, letterSpacing: '1px', color: '#000', cursor: 'pointer' }}>
-                                            ID {getSortIndicator('id')}
-                                        </th>
-                                        <th onClick={() => handleSort('username')} style={{ padding: '20px', fontSize: '12px', fontWeight: 900, letterSpacing: '1px', color: '#000', cursor: 'pointer' }}>
-                                            USERNAME {getSortIndicator('username')}
-                                        </th>
-                                        <th onClick={() => handleSort('balance')} style={{ padding: '20px', fontSize: '12px', fontWeight: 900, letterSpacing: '1px', color: '#000', cursor: 'pointer' }}>
-                                            BALANCE {getSortIndicator('balance')}
-                                        </th>
-                                        <th onClick={() => handleSort('role')} style={{ padding: '20px', fontSize: '12px', fontWeight: 900, letterSpacing: '1px', color: '#000', cursor: 'pointer' }}>
-                                            CURRENT ROLE {getSortIndicator('role')}
-                                        </th>
-                                        <th style={{ padding: '20px', fontSize: '12px', fontWeight: 900, letterSpacing: '1px', color: '#000' }}>
-                                            ACTION
-                                        </th>
+                                        <th onClick={() => handleSort('id')} style={{ padding: '20px', fontSize: '12px', fontWeight: 900, letterSpacing: '1px', color: '#000', cursor: 'pointer' }}>ID {getSortIndicator('id')}</th>
+                                        <th onClick={() => handleSort('username')} style={{ padding: '20px', fontSize: '12px', fontWeight: 900, letterSpacing: '1px', color: '#000', cursor: 'pointer' }}>USERNAME {getSortIndicator('username')}</th>
+                                        <th onClick={() => handleSort('balance')} style={{ padding: '20px', fontSize: '12px', fontWeight: 900, letterSpacing: '1px', color: '#000', cursor: 'pointer' }}>BALANCE {getSortIndicator('balance')}</th>
+                                        <th onClick={() => handleSort('role')} style={{ padding: '20px', fontSize: '12px', fontWeight: 900, letterSpacing: '1px', color: '#000', cursor: 'pointer' }}>CURRENT ROLE {getSortIndicator('role')}</th>
+                                        <th style={{ padding: '20px', fontSize: '12px', fontWeight: 900, letterSpacing: '1px', color: '#000' }}>ACTION</th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -251,24 +233,18 @@ const AdminDashboard = () => {
                                                 {currencySymbol} {((u.balance || 0) * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                             </td>
                                             <td style={{ padding: '20px' }}>
-                                                    <span style={{
-                                                        padding: '5px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 900, letterSpacing: '0.5px',
-                                                        backgroundColor: u.role === 'ROLE_ADMIN' ? '#000' : u.role === 'ROLE_MODERATOR' ? '#3498db' : '#f5f5f5',
-                                                        color: u.role === 'ROLE_ADMIN' || u.role === 'ROLE_MODERATOR' ? '#fff' : '#666',
-                                                        border: u.role === 'ROLE_USER' ? '1px solid #ccc' : 'none'
-                                                    }}>
-                                                        {(u.role || 'USER').replace('ROLE_', '')}
-                                                    </span>
+                                                <span style={{
+                                                    padding: '5px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 900, letterSpacing: '0.5px',
+                                                    backgroundColor: u.role === 'ROLE_ADMIN' ? '#000' : u.role === 'ROLE_MODERATOR' ? '#3498db' : '#f5f5f5',
+                                                    color: u.role === 'ROLE_ADMIN' || u.role === 'ROLE_MODERATOR' ? '#fff' : '#666',
+                                                    border: u.role === 'ROLE_USER' ? '1px solid #ccc' : 'none'
+                                                }}>{(u.role || 'USER').replace('ROLE_', '')}</span>
                                             </td>
                                             <td style={{ padding: '20px' }}>
                                                 <select
                                                     value={u.role || 'ROLE_USER'}
                                                     onChange={(e) => handleRoleChange(u.id, u.role, e.target.value)}
-                                                    style={{
-                                                        padding: '8px 12px', border: '2px solid #000', borderRadius: '6px',
-                                                        fontWeight: 900, fontSize: '11px', cursor: 'pointer', outline: 'none',
-                                                        backgroundColor: '#fff', letterSpacing: '0.5px'
-                                                    }}
+                                                    style={{ padding: '8px 12px', border: '2px solid #000', borderRadius: '6px', fontWeight: 900, fontSize: '11px', cursor: 'pointer', outline: 'none', backgroundColor: '#fff', letterSpacing: '0.5px' }}
                                                     disabled={u.role === 'ROLE_ADMIN'}
                                                 >
                                                     <option value="ROLE_USER">SET USER</option>
@@ -298,26 +274,9 @@ const sidebarStyle = { width: '260px', background: '#fff', color: '#000', displa
 const navItemStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 15px', color: '#333', textDecoration: 'none', fontSize: '13px', fontWeight: 700, borderRadius: '10px', marginBottom: '5px' };
 const subLinkStyle = { display: 'block', padding: '8px 10px', color: '#666', textDecoration: 'none', fontSize: '12px', fontWeight: 600, marginBottom: '2px' };
 const moderatorBtnStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 15px', borderRadius: '10px', background: 'transparent', color: '#333', textDecoration: 'none', fontSize: '13px', fontWeight: 700, marginTop: '20px' };
-
-const headerStyle = {
-    background: '#000', padding: '0 30px', height: '70px',
-    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    borderBottom: '1px solid #333', flexShrink: 0
-};
-
-const cardStyle: React.CSSProperties = {
-    flex: 1, backgroundColor: '#000', borderRadius: '15px',
-    padding: '25px', display: 'flex', flexDirection: 'column', gap: '10px',
-    boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
-};
-
-const cardHeaderStyle: React.CSSProperties = {
-    fontSize: '11px', fontWeight: 900, color: '#888',
-    letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px'
-};
-
-const cardValueStyle: React.CSSProperties = {
-    fontSize: '28px', fontWeight: 900, color: '#fff'
-};
+const headerStyle = { background: '#000', padding: '0 30px', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #333', flexShrink: 0 };
+const cardStyle: React.CSSProperties = { flex: 1, backgroundColor: '#000', borderRadius: '15px', padding: '25px', display: 'flex', flexDirection: 'column', gap: '10px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' };
+const cardHeaderStyle: React.CSSProperties = { fontSize: '11px', fontWeight: 900, color: '#888', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '8px' };
+const cardValueStyle: React.CSSProperties = { fontSize: '28px', fontWeight: 900, color: '#fff' };
 
 export default AdminDashboard;

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
-import { Home, Car, LogOut, Menu, Plus, Search, RotateCcw, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, ShieldCheck } from 'lucide-react';
+import { Home, Car, LogOut, Menu, Plus, Search, RotateCcw, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, ShieldCheck, User, MessageSquare } from 'lucide-react';
 
 const MyCollection = () => {
     const [myCars, setMyCars] = useState([]);
@@ -132,6 +132,14 @@ const MyCollection = () => {
                 }}
             >
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
+                    <Link to="/profile" className="nav-item" style={navItemStyle}>
+                        <User size={22}/> PROFILE
+                    </Link>
+
+                    <Link to="/messages" className="nav-item" style={navItemStyle}>
+                        <MessageSquare size={22}/> MESSAGES
+                    </Link>
+
                     <Link to="/" className="nav-item" style={navItemStyle}><Home size={22}/> HOME PAGE</Link>
 
                     <div
@@ -185,14 +193,13 @@ const MyCollection = () => {
                             <Link to="/profile" style={{ fontSize: '12px', fontWeight: 800, color: '#fff', textDecoration: 'none', cursor: 'pointer' }}>
                                 USERNAME: {user.username?.toUpperCase()}
                             </Link>                            {(isAdmin || isModerator) && (
-                                <div style={{ background: '#f39c12', color: '#000', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid #d35400' }}>
-                                    <ShieldCheck size={12} /> {isAdmin ? 'ADMIN' : 'MODERATOR'}
-                                </div>
-                            )}
+                            <div style={{ background: '#f39c12', color: '#000', padding: '2px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid #d35400' }}>
+                                <ShieldCheck size={12} /> {isAdmin ? 'ADMIN' : 'MODERATOR'}
+                            </div>
+                        )}
                         </div>
 
                         <div style={{ background: '#1a1a1a', padding: '6px 15px', borderRadius: '8px', border: '1px solid #333', color: '#fff', fontSize: '13px', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            {/* 🔥 Bakiye Gösterimi Kura Göre Güncellendi */}
                             <span>BALANCE: {currencySymbol} {(balance * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                             <div onClick={() => setIsModalOpen(true)} style={{ background: '#fff', color: '#000', border: 'none', borderRadius: '4px', padding: '1px 5px', cursor: 'pointer', display:'flex', alignItems:'center' }}>
                                 <Plus size={12}/>
@@ -203,7 +210,6 @@ const MyCollection = () => {
                     <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic', color: '#fff' }}>MY PRIVATE GARAGE</div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
-                        {/* ✅ HEADER'A PARA BİRİMİ SEÇİCİSİ EKLENDİ */}
                         <CurrencySelector onCurrencyChange={handleCurrencyChange} />
 
                         <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#999', display: 'flex', alignItems: 'center', gap: '5px' }}>
@@ -251,7 +257,6 @@ const MyCollection = () => {
                                     <td style={{ padding: '20px', color: '#666' }}>{car.model}</td>
                                     <td style={{ padding: '20px', fontWeight: 700 }}>{car.year}</td>
 
-                                    {/* 🔥 FİYAT GÖSTERİMİ KURA GÖRE GÜNCELLENDİ */}
                                     <td style={{ padding: '20px', fontWeight: 900, fontSize: '18px' }}>
                                         {currencySymbol} {(car.price * currencyRate).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                                     </td>
@@ -306,7 +311,7 @@ const MyCollection = () => {
 const sidebarStyle = { width: '260px', background: '#fff', color: '#000', display: 'flex', flexDirection: 'column', borderRight: '1px solid #eee' };
 const navItemStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 15px', color: '#333', textDecoration: 'none', fontSize: '13px', fontWeight: 700, borderRadius: '10px', marginBottom: '5px' };
 const subLinkStyle = { display: 'block', padding: '8px 10px', color: '#666', textDecoration: 'none', fontSize: '12px', fontWeight: 600, marginBottom: '2px' };
-const moderatorBtnStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 15px', borderRadius: '10px', background: 'transparent', color: '#000', fontSize: '13px', fontWeight: 900, marginTop: '20px', textDecoration: 'none', cursor: 'pointer' };
+const moderatorBtnStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 15px', borderRadius: '10px', background: 'transparent', color: '#333', textDecoration: 'none', fontSize: '13px', fontWeight: 700, marginTop: '20px' };
 const headerStyle = { background: '#000', padding: '0 30px', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #333', flexShrink: 0 };
 const labelStyle = { color: '#fff', fontSize: '10px', fontWeight: 900, display: 'block', marginBottom: '8px' };
 const inputStyle = { width: '100%', padding: '12px', borderRadius: '10px', border: 'none', backgroundColor: '#fff', color: '#000', fontWeight: 700, fontSize: '14px' };

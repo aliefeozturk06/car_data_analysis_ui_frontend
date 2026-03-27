@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
 import {
     Home, Car, LogOut, Menu, Plus, Search, RotateCcw,
-    ChevronLeft, ChevronRight, X, ShieldCheck, ChevronUp, ChevronDown, User, MapPin
+    ChevronLeft, ChevronRight, X, ShieldCheck, ChevronUp, ChevronDown, User, MapPin,
+    MessageSquare // 🔥 İkon buraya eklendi
 } from 'lucide-react';
 
 const HomePage = () => {
@@ -182,6 +183,10 @@ const HomePage = () => {
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
                     <Link to="/profile" className="nav-item" style={navItemStyle}>
                         <User size={22}/> PROFILE
+                    </Link>
+
+                    <Link to="/messages" className="nav-item" style={navItemStyle}>
+                        <MessageSquare size={22}/> MESSAGES
                     </Link>
 
                     <Link to="/" className="nav-item active" style={{...navItemStyle, color: '#000'}}><Home size={22}/> HOME PAGE</Link>

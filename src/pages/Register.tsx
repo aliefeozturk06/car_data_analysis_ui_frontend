@@ -13,24 +13,19 @@ const Register = () => {
         setLoading(true);
 
         try {
-            // ✅ Senin orijinal payload yapın (role dahil)
-            // Eğer backend record'da role varsa burası böyle kalmalı.
             const payload = {
                 username: username.trim(),
                 password: password,
             };
 
-            // URL'nin /api/auth/register olduğundan emin oluyoruz
             const response = await api.post('/auth/register', payload);
 
-            // Backend'den 200 veya 201 gelirse başarılı sayıyoruz
             if (response.status === 200 || response.status === 201) {
                 alert("Registration Successful!");
                 navigate('/login');
             }
         } catch (error: any) {
             console.error("Full Register Error:", error);
-            // Hata mesajını backend'den veya default olarak alıyoruz
             const msg = error.response?.data || error.message || "Registration failed.";
             alert(`ERROR: ${msg}`);
         } finally {

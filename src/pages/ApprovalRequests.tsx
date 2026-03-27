@@ -2,10 +2,11 @@ import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
-import UserProfilePicture from '../components/UserProfilePicture'; // 🔥 Yeni eklendi
+import UserProfilePicture from '../components/UserProfilePicture';
 import {
     Home, Car, LogOut, Menu, CheckCircle, Plus,
-    ShieldCheck, ChevronDown, ChevronUp, User, Clock, RotateCcw, ChevronLeft, ChevronRight, X
+    ShieldCheck, ChevronDown, ChevronUp, User, Clock, RotateCcw, ChevronLeft, ChevronRight, X,
+    MessageSquare // 🔥 İkon buraya eklendi
 } from 'lucide-react';
 
 const ApprovalRequests = () => {
@@ -108,7 +109,6 @@ const ApprovalRequests = () => {
     return (
         <div className="app-wrapper" style={{ height: '100vh', display: 'flex', overflow: 'hidden', backgroundColor: '#f5f5f5', fontFamily: "'Inter', sans-serif" }}>
 
-            {/* 🛡️ SIDEBAR */}
             <aside
                 className="sidebar"
                 style={{
@@ -121,6 +121,10 @@ const ApprovalRequests = () => {
                 <nav style={{ marginTop: '50px', padding: '0 15px', width: '260px' }}>
                     <Link to="/profile" className="nav-item" style={navItemStyle}>
                         <User size={22}/> PROFILE
+                    </Link>
+
+                    <Link to="/messages" className="nav-item" style={navItemStyle}>
+                        <MessageSquare size={22}/> MESSAGES
                     </Link>
 
                     <Link to="/" className="nav-item" style={navItemStyle}>
@@ -363,7 +367,7 @@ const ApprovalRequests = () => {
     );
 };
 
-// ... stiller (sidebarStyle, navItemStyle vb.) aynen kalıyor ...
+// --- STYLES ---
 const sidebarStyle = {
     background: '#fff',
     color: '#000',

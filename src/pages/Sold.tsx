@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
-import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, ShieldCheck, User } from 'lucide-react'; // User ikonu eklendi
+import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, ShieldCheck, User, MessageSquare } from 'lucide-react';
 
 const Sold = () => {
     const [cars, setCars] = useState([]);
@@ -70,6 +70,10 @@ const Sold = () => {
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
                     <Link to="/profile" className="nav-item" style={navItemStyle}>
                         <User size={22}/> PROFILE
+                    </Link>
+
+                    <Link to="/messages" className="nav-item" style={navItemStyle}>
+                        <MessageSquare size={22}/> MESSAGES
                     </Link>
 
                     <Link to="/" className="nav-item" style={navItemStyle}>

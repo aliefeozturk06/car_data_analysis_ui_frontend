@@ -10,8 +10,10 @@ import ApprovalWaiting from './pages/ApprovalWaiting';
 import ApprovalRequests from './pages/ApprovalRequests';
 import AdminDashboard from './pages/AdminDashboard';
 import UserCarStats from './pages/UserCarStats';
+import MessagesPage from './pages/MessagesPage';
 
 import type { JSX } from "react";
+import { ChatProvider } from './context/ChatContext';
 
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
     const token = localStorage.getItem('token');
@@ -20,41 +22,44 @@ const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
 
 function App() {
     return (
-        <BrowserRouter>
-            <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
+        <ChatProvider>
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
 
-                <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-                <Route path="/my-cars" element={<ProtectedRoute><MyCars /></ProtectedRoute>} />
-                <Route path="/for-sale" element={<ProtectedRoute><ForSale /></ProtectedRoute>} />
-                <Route path="/sold" element={<ProtectedRoute><Sold /></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                    <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+                    <Route path="/my-cars" element={<ProtectedRoute><MyCars /></ProtectedRoute>} />
+                    <Route path="/for-sale" element={<ProtectedRoute><ForSale /></ProtectedRoute>} />
+                    <Route path="/sold" element={<ProtectedRoute><Sold /></ProtectedRoute>} />
+                    <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
 
+                    <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
 
-                <Route
-                    path="/approval-waiting"
-                    element={<ProtectedRoute><ApprovalWaiting /></ProtectedRoute>}
-                />
+                    <Route
+                        path="/approval-waiting"
+                        element={<ProtectedRoute><ApprovalWaiting /></ProtectedRoute>}
+                    />
 
-                <Route
-                    path="/approval-requests"
-                    element={<ProtectedRoute><ApprovalRequests /></ProtectedRoute>}
-                />
+                    <Route
+                        path="/approval-requests"
+                        element={<ProtectedRoute><ApprovalRequests /></ProtectedRoute>}
+                    />
 
-                <Route
-                    path="/admin"
-                    element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>}
-                />
+                    <Route
+                        path="/admin"
+                        element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>}
+                    />
 
-                <Route
-                    path="/admin/car-stats"
-                    element={<ProtectedRoute><UserCarStats /></ProtectedRoute>}
-                />
+                    <Route
+                        path="/admin/car-stats"
+                        element={<ProtectedRoute><UserCarStats /></ProtectedRoute>}
+                    />
 
-                <Route path="*" element={<Navigate to="/login" replace />} />
-            </Routes>
-        </BrowserRouter>
+                    <Route path="*" element={<Navigate to="/login" replace />} />
+                </Routes>
+            </BrowserRouter>
+        </ChatProvider>
     );
 }
 

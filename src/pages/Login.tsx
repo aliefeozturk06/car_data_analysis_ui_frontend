@@ -11,10 +11,8 @@ const Login = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            // Backend AuthRequestDTO (username, password) bekliyor
             const response = await api.post('/auth/login', { username, password });
 
-            // Record yapısından gelen veriler (Java: AuthResponseDTO)
             const { token, username: backendUsername, role, balance } = response.data;
 
             if (token) {
@@ -25,7 +23,6 @@ const Login = () => {
                     balance: balance || 0
                 }));
 
-                // State temizliği ve ana sayfaya yönlendirme
                 window.location.href = '/';
             }
         } catch (err: any) {

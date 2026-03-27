@@ -87,7 +87,6 @@ const DashboardLayout = () => {
 
             {isSidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.4)', zIndex: 1999 }} />}
 
-            {/* 🥪 HEADER */}
             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 30px', height: '65px', backgroundColor: '#000', color: '#fff', zIndex: 100 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
                     <Menu onClick={() => setSidebarOpen(true)} style={{ cursor: 'pointer' }} size={26} />
@@ -97,12 +96,10 @@ const DashboardLayout = () => {
                 <button onClick={handleLogout} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontWeight: 900 }}>LOGOUT <LogOut size={18} /></button>
             </header>
 
-            {/* 🥪 İÇERİK (Outlet context ile pagination verisini alt sayfalara gönderiyor) */}
             <main style={{ flex: 1, overflowY: 'auto', backgroundColor: '#f5f5f5' }}>
                 <Outlet context={{ setPagination }} />
             </main>
 
-            {/* 🥪 FOOTER (Artık Canlı! ⚡️) */}
             <footer style={{ background: '#000', padding: '15px 35px', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ fontSize: '11px', fontWeight: 900 }}>PAGE {pagination.currentPage + 1} OF {pagination.totalPages || 1}</div>
                 <div style={{ fontSize: '11px', fontWeight: 900 }}>TOTAL ITEMS: {pagination.totalElements}</div>

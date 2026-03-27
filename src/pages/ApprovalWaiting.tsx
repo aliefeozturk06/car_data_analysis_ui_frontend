@@ -2,7 +2,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
-import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, RotateCcw, XCircle, ShieldCheck, User } from 'lucide-react'; // User ikonu eklendi
+import {
+    Home, Car, LogOut, Menu, ChevronUp, ChevronDown, RotateCcw, XCircle, ShieldCheck, User, MessageSquare
+} from 'lucide-react';
 
 const ApprovalWaiting = () => {
     const [requests, setRequests] = useState([]);
@@ -59,8 +61,13 @@ const ApprovalWaiting = () => {
 
             <aside className={`sidebar ${!isSidebarOpen ? 'closed' : ''}`} style={sidebarStyle}>
                 <nav style={{ marginTop: '50px', padding: '0 15px', minWidth: '260px' }}>
+
                     <Link to="/profile" className="nav-item" style={navItemStyle}>
                         <User size={22}/> PROFILE
+                    </Link>
+
+                    <Link to="/messages" className="nav-item" style={navItemStyle}>
+                        <MessageSquare size={22}/> MESSAGES
                     </Link>
 
                     <Link to="/" className="nav-item" style={navItemStyle}><Home size={22}/> HOME PAGE</Link>
@@ -107,6 +114,7 @@ const ApprovalWaiting = () => {
 
             <div className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
 
+                {/* 🥪 HEADER (Siyah Düzen) */}
                 <header className="top-header" style={headerStyle}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         <Menu onClick={() => setSidebarOpen(!isSidebarOpen)} style={{ cursor: 'pointer', color: '#fff' }} size={24} />
@@ -207,7 +215,6 @@ const sidebarStyle: React.CSSProperties = { width: '260px', background: '#fff', 
 const navItemStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 15px', color: '#333', textDecoration: 'none', fontSize: '13px', fontWeight: 700, borderRadius: '10px', marginBottom: '5px' };
 const subLinkStyle = { display: 'block', padding: '8px 10px', color: '#666', textDecoration: 'none', fontSize: '12px', fontWeight: 600, marginBottom: '2px' };
 const moderatorBtnStyle = { display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 15px', borderRadius: '10px', background: 'transparent', color: '#333', textDecoration: 'none', fontSize: '13px', fontWeight: 700, marginTop: '20px' };
-
 const headerStyle = { background: '#000', padding: '0 30px', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #333', flexShrink: 0 };
 
 export default ApprovalWaiting;

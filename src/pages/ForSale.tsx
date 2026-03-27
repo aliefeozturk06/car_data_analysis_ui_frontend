@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import api from '../api/axiosConfig';
 import { Link } from 'react-router-dom';
 import CurrencySelector from '../components/CurrencySelector';
-import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, ShieldCheck, User } from 'lucide-react'; // User ikonu eklendi
+import { Home, Car, LogOut, Menu, ChevronUp, ChevronDown, ShieldCheck, User, MessageSquare } from 'lucide-react';
 
 const ForSale = () => {
     const [cars, setCars] = useState([]);
@@ -79,6 +79,10 @@ const ForSale = () => {
                         <User size={22}/> PROFILE
                     </Link>
 
+                    <Link to="/messages" className="nav-item" style={navItemStyle}>
+                        <MessageSquare size={22}/> MESSAGES
+                    </Link>
+
                     <Link to="/" className="nav-item" style={navItemStyle}>
                         <Home size={22}/> HOME PAGE
                     </Link>
@@ -129,7 +133,7 @@ const ForSale = () => {
 
             <div className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
 
-                <header className="top-header" style={{ flexShrink: 0, zIndex: 10 }}>
+                <header className="top-header" style={{ flexShrink: 0, zIndex: 10, background: '#000', color: '#fff', height: '70px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 30px', borderBottom: '1px solid #333' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         <Menu onClick={() => setSidebarOpen(!isSidebarOpen)} size={24} style={{ cursor: 'pointer' }} />
 
@@ -137,14 +141,16 @@ const ForSale = () => {
                             <Link to="/profile" style={{ fontSize: '12px', fontWeight: 800, color: '#fff', textDecoration: 'none' }}>
                                 SELLER: {user.username?.toUpperCase()}
                             </Link>
-                            <span style={{ background: '#000', color: '#fff', padding: '2px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>LISTING</span>
+                            <span style={{ background: '#333', color: '#fff', padding: '2px 10px', borderRadius: '4px', fontSize: '10px', fontWeight: 900 }}>LISTING</span>
                         </div>
                     </div>
                     <div style={{ fontSize: '20px', fontWeight: 900, fontStyle: 'italic' }}>VEHICLES FOR SALE</div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                         <CurrencySelector onCurrencyChange={handleCurrencyChange} />
-                        <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#666' }}>LOGOUT <LogOut size={16}/></div>
+                        <div onClick={() => { localStorage.clear(); window.location.href='/login'; }} style={{ cursor: 'pointer', fontSize: '11px', fontWeight: 900, color: '#999', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            LOGOUT <LogOut size={16}/>
+                        </div>
                     </div>
                 </header>
 
