@@ -31,11 +31,7 @@ const Sold = () => {
 
     const fetchCars = useCallback(async () => {
         try {
-            const res = await api.get(`/purchase/sold-history`, {
-                params: {
-                    username: user.username
-                }
-            });
+            const res = await api.get('/purchase/sold-history');
 
             if (Array.isArray(res.data)) {
                 setCars(res.data);

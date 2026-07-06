@@ -58,6 +58,9 @@ const MessagesPage = () => {
         const socket = new SockJS(`${getBaseUrl()}/ws-chat`);
         const client = new Client({
             webSocketFactory: () => socket,
+            connectHeaders: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            },
             onConnect: () => {
                 client.subscribe(`/user/${currentUser}/queue/messages`, (message) => {
                     const newMsg = JSON.parse(message.body);

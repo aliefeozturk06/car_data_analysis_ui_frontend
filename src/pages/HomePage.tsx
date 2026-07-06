@@ -127,7 +127,7 @@ const HomePage = () => {
         if (!window.confirm("Confirm purchase?")) return;
 
         try {
-            await api.post(`/purchase/buy?username=${user.username}&carId=${carId}`);
+            await api.post(`/purchase/buy?carId=${carId}`);
             const newBalance = balance - carPrice;
             setBalance(newBalance);
             localStorage.setItem('user', JSON.stringify({ ...user, balance: newBalance }));
@@ -143,7 +143,7 @@ const HomePage = () => {
         if (isNaN(amount) || amount <= 0) return alert("Invalid amount!");
         const amountInTL = amount / currencyRate;
         try {
-            const res = await api.put(`/users/add-balance?username=${user.username}&amount=${amountInTL}`);
+            const res = await api.put(`/users/add-balance?amount=${amountInTL}`);
             setBalance(res.data);
             localStorage.setItem('user', JSON.stringify({ ...user, balance: res.data }));
             setIsFundsModalOpen(false);
@@ -154,7 +154,7 @@ const HomePage = () => {
     const handleAddNewCar = async () => {
         try {
             const carToPost = { ...newCar, price: Math.floor(newCar.price / currencyRate) };
-            await api.post(`/cars?username=${user.username}`, carToPost);
+            await api.post('/cars', carToPost);
             setIsAddModalOpen(false);
             fetchCars();
         } catch (e) { alert("Error!"); }

@@ -52,7 +52,7 @@ const MyCollection = () => {
 
         try {
             const res = await api.get('/purchase/my-cars', {
-                params: { ...searchFilters, username: user.username, sort: sortParams },
+                params: { ...searchFilters, status: 'ALL', sort: sortParams },
                 paramsSerializer: { indexes: null }
             });
             setMyCars(res.data.cars || []);
@@ -71,7 +71,7 @@ const MyCollection = () => {
     const handleSellCar = async (carId: number, carPrice: number) => {
         if (!window.confirm("Are you sure you want to sell this car?")) return;
         try {
-            await api.post(`/purchase/sell?username=${user.username}&carId=${carId}`);
+            await api.put(`/purchase/list-for-sale?carId=${carId}`);
             const newBalance = balance + carPrice;
             setBalance(newBalance);
             localStorage.setItem('user', JSON.stringify({ ...user, balance: newBalance }));
@@ -103,7 +103,7 @@ const MyCollection = () => {
         const amountInTL = amount / currencyRate;
 
         try {
-            const res = await api.put(`/users/add-balance?username=${user.username}&amount=${amountInTL}`);
+            const res = await api.put(`/users/add-balance?amount=${amountInTL}`);
             setBalance(res.data);
             localStorage.setItem('user', JSON.stringify({ ...user, balance: res.data }));
             setIsModalOpen(false); setAmountToAdd('');

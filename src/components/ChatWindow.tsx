@@ -37,6 +37,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ currentUser, targetUser, onClos
         const socket = new SockJS(`${getBaseUrl()}/ws-chat`);
         const client = new Client({
             webSocketFactory: () => socket,
+            connectHeaders: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            },
             onConnect: () => {
                 client.subscribe(`/user/${currentUser}/queue/messages`, (message) => {
                     const receivedMsg: Message = JSON.parse(message.body);

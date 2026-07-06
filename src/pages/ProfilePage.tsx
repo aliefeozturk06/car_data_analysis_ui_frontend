@@ -86,7 +86,7 @@ const ProfilePage = () => {
     useEffect(() => {
         const fetchProvinces = async () => {
             try {
-                const res = await axios.get('https://turkiyeapi.dev/api/v1/provinces');
+                const res = await axios.get('https://api.turkiyeapi.dev/v1/provinces');
                 const sortedProvinces = res.data.data.sort((a: any, b: any) => a.name.localeCompare(b.name));
                 setProvinces(sortedProvinces);
             } catch (err) {
@@ -103,7 +103,7 @@ const ProfilePage = () => {
                 return;
             }
             try {
-                const res = await axios.get(`https://turkiyeapi.dev/api/v1/provinces/${selectedProvinceId}`);
+                const res = await axios.get(`https://api.turkiyeapi.dev/v1/provinces/${selectedProvinceId}`);
                 setDistricts(res.data.data.districts);
             } catch (err) {
                 console.error("Districts could not be fetched:", err);
@@ -140,13 +140,13 @@ const ProfilePage = () => {
                 console.error("Failed to fetch fresh user data:", err);
             }
 
-            const myCarsRes = await api.get(`/purchase/my-cars?username=${user.username}&status=ALL`);
+            const myCarsRes = await api.get('/purchase/my-cars?status=ALL');
             const allMyCars = myCarsRes.data.dtoList || myCarsRes.data.cars || myCarsRes.data || [];
 
             setOwnedCars(allMyCars.filter((c: any) => c.status === 'OWNED'));
             setOnSaleCars(allMyCars.filter((c: any) => c.status === 'ON_SALE'));
 
-            const soldRes = await api.get(`/purchase/sold-history?username=${user.username}`);
+            const soldRes = await api.get('/purchase/sold-history');
             setSoldCars(soldRes.data.dtoList || soldRes.data || []);
         } catch (e) {
             console.error("Failed to fetch profile stats:", e);
@@ -172,7 +172,7 @@ const ProfilePage = () => {
 
         try {
             setIsUploading(true);
-            await api.post(`/users/${user.username}/upload-profile-picture`, formData, {
+            await api.post('/users/upload-profile-picture', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
             await fetchProfilePicture();
@@ -188,7 +188,7 @@ const ProfilePage = () => {
     const handleProfilePicDelete = async () => {
         if (!window.confirm("Are you sure you want to delete your profile picture?")) return;
         try {
-            await api.delete(`/users/${user.username}/profile-picture`);
+            await api.delete('/users/profile-picture');
             setProfilePicBlob(null);
             alert("Profile picture deleted.");
         } catch (err) {
@@ -201,7 +201,7 @@ const ProfilePage = () => {
         if (isNaN(amount) || amount <= 0) return alert("Please enter a valid amount!");
         const amountInTL = amount / currencyRate;
         try {
-            const res = await api.put(`/users/add-balance?username=${user.username}&amount=${amountInTL}`);
+            const res = await api.put(`/users/add-balance?amount=${amountInTL}`);
             setBalance(res.data);
             localStorage.setItem('user', JSON.stringify({ ...user, balance: res.data }));
             setIsFundsModalOpen(false);
@@ -217,7 +217,7 @@ const ProfilePage = () => {
             return;
         }
         try {
-            await api.put(`/users/update-username?currentUsername=${user.username}&newUsername=${newUsername}`);
+            await api.put(`/users/update-username?newUsername=${newUsername}`);
             alert("Username successfully updated! For security reasons, please log in again.");
             localStorage.clear();
             window.location.href = '/login';
@@ -235,7 +235,7 @@ const ProfilePage = () => {
             return;
         }
         try {
-            await api.put(`/users/update-location?username=${user.username}&newLocation=${combinedLocation}`);
+            await api.put(`/users/update-location?newLocation=${combinedLocation}`);
             setCurrentLocation(combinedLocation);
             localStorage.setItem('user', JSON.stringify({ ...user, location: combinedLocation }));
             alert("Location successfully updated!");

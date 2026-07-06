@@ -65,7 +65,6 @@ const MyCars = () => {
             const res = await api.get('/purchase/my-cars', {
                 params: {
                     ...searchFilters,
-                    username: user.username,
                     status: 'ALL',
                     sort: sortParams
                 },
@@ -93,31 +92,42 @@ const MyCars = () => {
         fetchMyCars();
     }, [filters.page, sorts, fetchMyCars]);
 
+    const describeError = (e: any): string => {
+        if (e.response) {
+            const data = e.response.data;
+            if (typeof data === 'string' && data.length > 0) return data;
+            if (data && typeof data === 'object') return data.message || data.error || JSON.stringify(data);
+            return `Server error (code: ${e.response.status})`;
+        }
+        if (e.request) return "Server unreachable. Please check your network connection.";
+        return e.message || "Unknown error.";
+    };
+
     const handleSellCar = async (carId: number) => {
         if (!window.confirm("Are you sure you want to sell this car?")) return;
         try {
-            await api.put(`/purchase/list-for-sale?username=${user.username}&carId=${carId}`);
+            await api.put(`/purchase/list-for-sale?carId=${carId}`);
             alert("The car is now on sale!");
             fetchMyCars();
-        } catch (e) { alert("Failed to put the car on sale."); }
+        } catch (e) { alert(`Failed to put the car on sale.\n\nReason: ${describeError(e)}`); }
     };
 
     const handleCancelSale = async (carId: number) => {
         if (!window.confirm("Are you sure you want to cancel the sale and return the car to your garage?")) return;
         try {
-            await api.put(`/purchase/cancel-sale?username=${user.username}&carId=${carId}`);
+            await api.put(`/purchase/cancel-sale?carId=${carId}`);
             alert("Sale canceled. The car is back in your garage.");
             fetchMyCars();
-        } catch (e) { alert("Failed to cancel the sale."); }
+        } catch (e) { alert(`Failed to cancel the sale.\n\nReason: ${describeError(e)}`); }
     };
 
     const handleCancelRequest = async (carId: number) => {
         if (!window.confirm("Are you sure you want to cancel this waiting approval request?")) return;
         try {
-            await api.post(`/purchase/cancel-update-request?username=${user.username}&carId=${carId}`);
+            await api.post(`/purchase/cancel-update-request?carId=${carId}`);
             alert("Request successfully canceled.");
             fetchMyCars();
-        } catch (e) { alert("Failed to cancel the request!"); }
+        } catch (e) { alert(`Failed to cancel the request!\n\nReason: ${describeError(e)}`); }
     };
 
     const handleAddNewCar = async () => {
@@ -126,7 +136,7 @@ const MyCars = () => {
                 ...newCar,
                 price: Math.floor(newCar.price / currencyRate)
             };
-            await api.post(`/cars?username=${user.username}`, carToPost);
+            await api.post('/cars', carToPost);
             alert("New car added successfully!");
             setIsAddModalOpen(false);
             fetchMyCars();
@@ -162,7 +172,6 @@ const MyCars = () => {
             const priceInTL = Math.floor(priceVal / currencyRate);
             const payload = {
                 carId: editingCar.id,
-                username: user.username,
                 newPrice: priceInTL,
                 newColor: updateForm.color,
                 newMileage: mileageVal
@@ -205,7 +214,7 @@ const MyCars = () => {
         const amountInTL = amount / currencyRate;
 
         try {
-            const res = await api.put(`/users/add-balance?username=${user.username}&amount=${amountInTL}`);
+            const res = await api.put(`/users/add-balance?amount=${amountInTL}`);
             setBalance(res.data);
             localStorage.setItem('user', JSON.stringify({ ...user, balance: res.data }));
             setIsFundsModalOpen(false);

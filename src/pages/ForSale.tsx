@@ -33,7 +33,6 @@ const ForSale = () => {
         try {
             const res = await api.get(`/purchase/my-cars`, {
                 params: {
-                    username: user.username,
                     status: 'ON_SALE',
                     page: currentPage,
                     size: 10
